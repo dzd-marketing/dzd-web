@@ -89,7 +89,7 @@ export default function App() {
 
   return (
     <HashRouter>
-      <div className={`min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'dark bg-dark' : 'bg-slate-50'}`}>
+      <div className={`min-h-screen transition-colors duration-200 ${theme === 'dark' ? 'dark bg-dark' : 'bg-slate-50'}`}>
         <Navbar 
           theme={theme} 
           toggleTheme={toggleTheme} 
@@ -99,7 +99,7 @@ export default function App() {
           onSignupClick={openSignup}
         />
         
-        <main className={`selection-blue transition-all duration-500 ${(showLogin || showSignup) ? 'blur-md scale-[0.98]' : ''}`}>
+        <main className={`selection-blue transition-all duration-300 ${(showLogin || showSignup) ? 'blur-[8px] scale-[0.99] opacity-50 pointer-events-none' : ''}`}>
           <Routes>
             <Route path="/" element={<LandingPage onSignupClick={openSignup} />} />
             <Route path="/onboarding" element={<OnboardingPage user={user} onComplete={handleOnboardingComplete} />} />
