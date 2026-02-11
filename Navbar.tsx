@@ -129,7 +129,7 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
               ) : (
                 <>
                   <button onClick={onLoginClick} className="text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-colors px-4">Login</button>
-                  <button onClick={onSignupClick} className="bg-blue-600 hover:bg-blue-700 text-white font-black text-[11px] uppercase tracking-widest px-8 py-3.5 rounded-xl shadow-xl shadow-blue-600/20 hover:scale-105 active:scale-95 transition-all">Join Empire</button>
+                  <button onClick={onSignupClick} className="bg-blue-600 hover:bg-blue-700 text-white font-black text-[11px] uppercase tracking-widest px-8 py-3.5 rounded-xl shadow-xl shadow-blue-600/20 hover:scale-105 active:scale-95 transition-all">Join</button>
                 </>
               )}
             </div>
@@ -185,7 +185,7 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
                  </div>
               ) : (
                 <div className="flex flex-col gap-4">
-                   <button onClick={() => { onLoginClick(); closeMobileMenu(); }} className="w-full py-6 text-slate-900 dark:text-white font-black uppercase tracking-widest text-xs border border-slate-200 dark:border-white/10 rounded-[1.5rem] bg-slate-50 dark:bg-white/5 active:bg-slate-100">Login to Empire</button>
+                   <button onClick={() => { onLoginClick(); closeMobileMenu(); }} className="w-full py-6 text-slate-900 dark:text-white font-black uppercase tracking-widest text-xs border border-slate-200 dark:border-white/10 rounded-[1.5rem] bg-slate-50 dark:bg-white/5 active:bg-slate-100">Login</button>
                    <button onClick={() => { onSignupClick(); closeMobileMenu(); }} className="w-full py-6 bg-blue-600 text-white font-black uppercase tracking-widest text-xs rounded-[1.5rem] shadow-xl shadow-blue-600/20 active:scale-[0.98] transition-all">Join The Resistance</button>
                 </div>
               )}
