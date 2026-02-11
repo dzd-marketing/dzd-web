@@ -4,7 +4,8 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, Zap, Smartphone, LayoutGrid, Award, ShieldCheck, Globe, Rocket } from 'lucide-react';
 import Footer from './Footer';
 
-const RevealSection = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => {
+// Updated RevealSection to use React.FC for better JSX support and to handle 'key' and 'children' props correctly
+const RevealSection: React.FC<{ children: React.ReactNode, className?: string }> = ({ children, className = "" }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [isActive, setIsActive] = useState(false);
 

@@ -1,15 +1,15 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Zap, ChevronDown, LayoutGrid, User, Settings, LogOut, Menu, X, Moon, Sun } from 'lucide-react';
+import { Zap, ChevronDown, LayoutGrid, User, Settings, LogOut, Menu, X, Moon, Sun, CreditCard, Shield } from 'lucide-react';
 
 export const ThemeToggle = ({ theme, toggleTheme }: { theme: string, toggleTheme: () => void }) => {
   return (
     <button 
       onClick={toggleTheme}
-      className="p-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-500 transition-all border border-slate-300 dark:border-white/10"
+      className="p-2.5 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-blue-600/10 hover:text-blue-600 transition-all border border-slate-200 dark:border-white/10"
     >
-      {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+      {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
     </button>
   );
 };
@@ -33,21 +33,20 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
   const closeMobileMenu = () => setIsOpen(false);
 
   return (
-    <nav className="fixed top-0 w-full z-40 bg-white/80 dark:bg-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-white/5">
+    <nav className="fixed top-0 w-full z-[100] bg-white/90 dark:bg-[#020617]/90 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          <Link to="/" className="flex items-center gap-2" onClick={closeMobileMenu}>
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg">
-              <Zap size={24} fill="white" />
+          <Link to="/" className="flex items-center gap-2 group" onClick={closeMobileMenu}>
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-xl shadow-blue-600/20 group-hover:scale-105 transition-transform">
+              <Zap size={22} fill="white" />
             </div>
-            <span className="text-xl font-bold text-slate-900 dark:text-white uppercase">DzD <span className="text-blue-600">Marketing</span></span>
+            <span className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">DzD <span className="text-blue-600">Marketing</span></span>
           </Link>
           
-          {/* Desktop Links */}
-          <div className="hidden md:flex items-center space-x-8 font-semibold">
-            <Link to="/" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-white px-3 py-2 text-sm">Home</Link>
-            <a href="#" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-white px-3 py-2 text-sm">Services</a>
-            <a href="#" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-white px-3 py-2 text-sm">Support</a>
+          <div className="hidden md:flex items-center space-x-10 font-bold uppercase tracking-widest text-[10px]">
+            <Link to="/" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-white transition-colors">Home</Link>
+            <a href="#" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-white transition-colors">Services</a>
+            <a href="#" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-white transition-colors">Support</a>
           </div>
 
           <div className="hidden md:flex items-center gap-4">
@@ -56,86 +55,105 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
               <div className="relative" ref={dropdownRef}>
                 <button 
                   onClick={() => setProfileOpen(!profileOpen)}
-                  className="flex items-center gap-3 bg-slate-100 dark:bg-slate-800 p-1.5 pr-4 rounded-full border border-slate-200 dark:border-white/10 hover:border-blue-500 transition-all"
+                  className="flex items-center gap-3 bg-slate-100 dark:bg-white/5 p-1.5 pr-4 rounded-2xl border border-slate-200 dark:border-white/10 hover:border-blue-500 transition-all group"
                 >
-                  <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm uppercase">
-                    {user.name?.[0] || user.email?.[0]}
+                  <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-sm uppercase shadow-lg shadow-blue-600/20 group-hover:scale-105 transition-transform">
+                    {(user.fullName?.[0] || user.name?.[0] || user.email?.[0]).toUpperCase()}
                   </div>
-                  <span className="text-sm font-bold text-slate-900 dark:text-white">{user.name || 'User'}</span>
-                  <ChevronDown size={14} className={`text-slate-400 transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
+                  <div className="text-left leading-tight hidden lg:block">
+                    <p className="text-xs font-black text-slate-900 dark:text-white truncate max-w-[100px]">{user.fullName || user.name || 'Account'}</p>
+                    <p className="text-[9px] font-black text-blue-500 uppercase">Verified User</p>
+                  </div>
+                  <ChevronDown size={14} className={`text-slate-400 transition-transform duration-300 ${profileOpen ? 'rotate-180' : ''}`} />
                 </button>
+
                 {profileOpen && (
-                  <div className="absolute right-0 mt-3 w-56 glass rounded-2xl p-2 shadow-2xl animate-scale-in border border-slate-200 dark:border-white/10">
-                    <div className="px-4 py-3 border-b border-slate-200 dark:border-white/5 mb-2">
-                      <p className="text-[10px] font-black uppercase text-slate-400">Account</p>
-                      <p className="text-sm font-bold truncate text-slate-900 dark:text-white">{user.email}</p>
+                  <div className="absolute right-0 mt-3 w-72 bg-white dark:bg-[#050b1a] rounded-3xl p-3 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] dark:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.7)] animate-scale-in border border-slate-200 dark:border-white/10 overflow-hidden isolate">
+                    {/* Glow effect inside dropdown */}
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-40 bg-blue-600/5 blur-3xl -z-10 rounded-full"></div>
+                    
+                    <div className="px-5 py-5 border-b border-slate-100 dark:border-white/5 mb-2">
+                      <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5">Command Profile</p>
+                      <p className="text-sm font-black truncate text-slate-900 dark:text-white">{user.email}</p>
+                      <div className="mt-4 flex items-center justify-between">
+                         <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                            <span className="text-[10px] font-black text-slate-500 uppercase">Online</span>
+                         </div>
+                         <span className="text-[10px] font-black text-blue-500 uppercase bg-blue-500/10 px-2 py-0.5 rounded-md">Platinum Member</span>
+                      </div>
                     </div>
-                    <Link to="/dashboard" onClick={() => setProfileOpen(false)} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white rounded-xl transition-all font-semibold">
-                      <LayoutGrid size={18} /> Dashboard
-                    </Link>
-                    <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white rounded-xl transition-all font-semibold">
-                      <User size={18} /> Profile Details
-                    </button>
-                    <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white rounded-xl transition-all font-semibold">
-                      <Settings size={18} /> Settings
-                    </button>
-                    <hr className="my-2 border-slate-200 dark:border-white/5" />
-                    <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all font-bold">
-                      <LogOut size={18} /> Logout
-                    </button>
+
+                    <div className="space-y-1">
+                      <Link to="/dashboard" onClick={() => setProfileOpen(false)} className="w-full flex items-center gap-4 px-4 py-3 text-xs font-black text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-blue-600 dark:hover:text-blue-500 rounded-xl transition-all uppercase tracking-widest">
+                        <LayoutGrid size={18} strokeWidth={2.5} /> Dashboard
+                      </Link>
+                      <button className="w-full flex items-center gap-4 px-4 py-3 text-xs font-black text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-blue-600 dark:hover:text-blue-500 rounded-xl transition-all uppercase tracking-widest">
+                        <User size={18} strokeWidth={2.5} /> Profile Vault
+                      </button>
+                      <button className="w-full flex items-center gap-4 px-4 py-3 text-xs font-black text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-blue-600 dark:hover:text-blue-500 rounded-xl transition-all uppercase tracking-widest">
+                        <CreditCard size={18} strokeWidth={2.5} /> Billing
+                      </button>
+                      <button className="w-full flex items-center gap-4 px-4 py-3 text-xs font-black text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-blue-600 dark:hover:text-blue-500 rounded-xl transition-all uppercase tracking-widest">
+                        <Settings size={18} strokeWidth={2.5} /> Systems
+                      </button>
+                    </div>
+
+                    <div className="mt-3 pt-2 border-t border-slate-100 dark:border-white/5">
+                      <button onClick={onLogout} className="w-full flex items-center gap-4 px-4 py-3 text-xs font-black text-red-500 hover:bg-red-500/10 rounded-xl transition-all uppercase tracking-widest">
+                        <LogOut size={18} strokeWidth={2.5} /> Terminate Session
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
             ) : (
               <>
-                <button onClick={onLoginClick} className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold text-sm px-4">Login</button>
-                <button onClick={onSignupClick} className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-6 py-3 rounded-xl shadow-lg">Sign Up</button>
+                <button onClick={onLoginClick} className="text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-colors px-4">Login</button>
+                <button onClick={onSignupClick} className="bg-blue-600 hover:bg-blue-700 text-white font-black text-[11px] uppercase tracking-widest px-8 py-3.5 rounded-xl shadow-xl shadow-blue-600/20 hover:scale-105 active:scale-95 transition-all">Join Empire</button>
               </>
             )}
           </div>
 
-          <div className="md:hidden flex items-center gap-2">
+          <div className="md:hidden flex items-center gap-3">
             <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
-            <button onClick={() => setIsOpen(!isOpen)} className="text-slate-600 dark:text-slate-300 p-2">
-              {isOpen ? <X size={28} /> : <Menu size={28} />}
+            <button onClick={() => setIsOpen(!isOpen)} className="text-slate-900 dark:text-white p-2 bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10">
+              {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu Tray - Now Absolutely Positioned */}
       {isOpen && (
-        <div className="md:hidden absolute top-20 left-0 w-full bg-white dark:bg-dark border-b border-slate-200 dark:border-white/5 animate-slide-up shadow-2xl z-50 overflow-y-auto max-h-[calc(100vh-80px)]">
-          <div className="px-6 pt-2 pb-8 space-y-2">
-            <Link to="/" onClick={closeMobileMenu} className="block py-4 text-lg font-black text-slate-900 dark:text-white border-b border-slate-100 dark:border-white/5">Home</Link>
-            <a href="#" onClick={closeMobileMenu} className="block py-4 text-lg font-black text-slate-900 dark:text-white border-b border-slate-100 dark:border-white/5">Services</a>
-            <a href="#" onClick={closeMobileMenu} className="block py-4 text-lg font-black text-slate-900 dark:text-white border-b border-slate-100 dark:border-white/5">Support</a>
+        <div className="md:hidden fixed inset-0 top-20 bg-white dark:bg-[#020617] z-[90] animate-slide-up flex flex-col p-6 overflow-y-auto">
+          <div className="space-y-4">
+            <Link to="/" onClick={closeMobileMenu} className="flex items-center justify-between p-5 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs">
+              Home <ChevronDown size={14} className="-rotate-90" />
+            </Link>
+            <a href="#" onClick={closeMobileMenu} className="flex items-center justify-between p-5 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs">
+              Services <ChevronDown size={14} className="-rotate-90" />
+            </a>
+            <a href="#" onClick={closeMobileMenu} className="flex items-center justify-between p-5 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs">
+              Support <ChevronDown size={14} className="-rotate-90" />
+            </a>
             
-            {user ? (
-               <div className="pt-4 space-y-3">
-                  <Link to="/dashboard" onClick={closeMobileMenu} className="flex items-center gap-3 py-4 text-blue-600 font-black">
-                    <LayoutGrid size={20} /> Dashboard
-                  </Link>
-                  <button onClick={() => { onLogout(); closeMobileMenu(); }} className="flex items-center gap-3 py-4 text-red-500 font-black">
-                    <LogOut size={20} /> Logout
-                  </button>
-               </div>
-            ) : (
-              <div className="pt-6 flex flex-col gap-4">
-                 <button 
-                  onClick={() => { onLoginClick(); closeMobileMenu(); }} 
-                  className="w-full py-4 text-slate-900 dark:text-white font-black border border-slate-200 dark:border-white/10 rounded-2xl bg-slate-50 dark:bg-white/5"
-                >
-                  Login
-                </button>
-                 <button 
-                  onClick={() => { onSignupClick(); closeMobileMenu(); }} 
-                  className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-600/20"
-                >
-                  Sign Up
-                </button>
-              </div>
-            )}
+            <div className="pt-6">
+              {user ? (
+                 <div className="space-y-3">
+                    <Link to="/dashboard" onClick={closeMobileMenu} className="flex items-center gap-4 p-5 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-600/20">
+                      <LayoutGrid size={20} /> Dashboard Center
+                    </Link>
+                    <button onClick={() => { onLogout(); closeMobileMenu(); }} className="w-full flex items-center gap-4 p-5 border border-red-500/20 text-red-500 rounded-2xl font-black uppercase tracking-widest text-xs">
+                      <LogOut size={20} /> Logout Protocol
+                    </button>
+                 </div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                   <button onClick={() => { onLoginClick(); closeMobileMenu(); }} className="w-full py-5 text-slate-900 dark:text-white font-black uppercase tracking-widest text-xs border border-slate-200 dark:border-white/10 rounded-2xl bg-slate-50 dark:bg-white/5">Login</button>
+                   <button onClick={() => { onSignupClick(); closeMobileMenu(); }} className="w-full py-5 bg-blue-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-xl shadow-blue-600/20">Get Started</button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
