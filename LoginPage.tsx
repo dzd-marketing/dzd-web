@@ -1,78 +1,181 @@
 
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Lock, User, Eye, EyeOff, ShieldCheck, Headphones, X } from 'lucide-react';
+import { auth } from './firebase';
 
-export default function LoginPage({ onLogin }: { onLogin: (u: any) => void }) {
+export default function LoginPage({ onLogin, onClose, onSwitchToSignup }: { onLogin: (u: any) => void, onClose: () => void, onSwitchToSignup: () => void }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Mocking Firebase Auth delay
+    // Note: Future implementation will use 'auth' from './firebase'
     setTimeout(() => {
       onLogin({ email, name: email.split('@')[0], onboarded: true });
       setLoading(false);
-      navigate('/dashboard');
     }, 1200);
   };
 
   const handleGoogleLogin = () => {
     setLoading(true);
+    // Note: Future implementation will use 'auth' from './firebase' with GoogleAuthProvider
     setTimeout(() => {
       onLogin({ email: 'googleuser@gmail.com', name: 'Google User', onboarded: true });
       setLoading(false);
-      navigate('/dashboard');
     }, 1000);
   };
 
+  const handleForgotClick = () => {
+    onClose();
+    navigate('/forgot');
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 pt-32 animate-fade-in bg-slate-50 dark:bg-dark">
-      <div className="max-w-md w-full glass p-8 md:p-12 rounded-[3rem] shadow-2xl border border-slate-200 dark:border-white/10">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-2">Welcome Back</h2>
-          <p className="text-slate-500 dark:text-slate-400 font-semibold">Log in to manage your growth</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-xs font-black uppercase text-slate-400 pl-2">Email Address</label>
-            <div className="relative group">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={20} />
-              <input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl py-4 pl-12 pr-4 text-slate-900 dark:text-white focus:border-blue-600 outline-none transition-all" placeholder="john@example.com" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between items-center px-2">
-              <label className="text-xs font-black uppercase text-slate-400">Password</label>
-              <Link to="/forgot" className="text-xs font-black text-blue-600">Forgot?</Link>
-            </div>
-            <div className="relative group">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={20} />
-              <input required type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl py-4 pl-12 pr-4 text-slate-900 dark:text-white focus:border-blue-600 outline-none transition-all" placeholder="••••••••" />
-            </div>
-          </div>
-          <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl shadow-xl flex items-center justify-center gap-2">
-            {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : 'Sign In'}
-          </button>
-        </form>
-
-        <div className="mt-8 relative text-center">
-          <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200 dark:border-white/10"></div></div>
-          <span className="relative bg-white dark:bg-darkSecondary px-4 text-xs font-black text-slate-400 uppercase">Or</span>
-        </div>
-
-        <button onClick={handleGoogleLogin} className="mt-6 w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 py-4 rounded-2xl flex items-center justify-center gap-3 font-bold">
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" className="w-5 h-5" alt="G" />
-          Login with Google
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 lg:p-12 overflow-y-auto no-scrollbar bg-black/60 backdrop-blur-sm animate-fade-in">
+      {/* Background Overlay Click to Close */}
+      <div className="fixed inset-0 cursor-pointer -z-10" onClick={onClose} />
+      
+      <div className="w-full max-w-5xl flex flex-col lg:flex-row rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-3xl animate-scale-in border border-white/5 bg-[#050b1a] relative z-10 transition-all">
+        {/* Close Button */}
+        <button 
+          onClick={onClose} 
+          className="absolute top-4 right-4 md:top-6 md:right-6 z-20 w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-all shadow-sm"
+        >
+          <X size={20} />
         </button>
 
-        <p className="mt-8 text-center text-slate-500 text-sm font-semibold">
-          No account? <Link to="/signup" className="text-blue-600 font-black">Sign up free</Link>
-        </p>
+        {/* Left Side: Branding (Hidden on Mobile) */}
+        <div className="hidden lg:flex w-1/2 relative bg-gradient-to-br from-blue-700 via-blue-800 to-blue-950 p-16 flex-col justify-center overflow-hidden lg:rounded-l-[2rem] lg:md:rounded-l-[2.5rem]">
+          <div className="absolute inset-0 opacity-10 mesh-bg">
+            <div className="blob top-0 left-0 bg-white"></div>
+          </div>
+          <div className="relative z-10">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-1.5 rounded-full mb-8">
+              <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+              <span className="text-white text-[10px] font-black uppercase tracking-[0.2em]">Next Gen Marketing</span>
+            </div>
+            <h1 className="text-6xl font-black text-white mb-6 tracking-tighter leading-none">
+              DzD <br /><span className="text-blue-300">Marketing</span>
+            </h1>
+            <p className="text-blue-100 text-lg font-medium mb-12 opacity-80 max-w-sm">
+              Empowering Your Social Growth with advanced SMM solutions and real-time analytics.
+            </p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl">
+                <ShieldCheck className="text-blue-300 mb-3" size={24} />
+                <h3 className="text-white text-xl font-black">99.9%</h3>
+                <p className="text-blue-200 text-[10px] font-bold uppercase tracking-widest opacity-60">Uptime</p>
+              </div>
+              <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl">
+                <Headphones className="text-blue-300 mb-3" size={24} />
+                <h3 className="text-white text-xl font-black">24/7</h3>
+                <p className="text-blue-200 text-[10px] font-bold uppercase tracking-widest opacity-60">Support</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side: Form */}
+        <div className="flex-1 bg-[#050b1a] p-8 md:p-12 lg:p-20 flex flex-col justify-center lg:rounded-r-[2rem] lg:md:rounded-r-[2.5rem]">
+          <div className="max-w-md w-full mx-auto">
+            <div className="mb-10 text-center lg:text-left">
+              <h2 className="text-3xl lg:text-4xl font-black text-white mb-3 tracking-tight">Welcome Back</h2>
+              <p className="text-slate-400 font-medium text-sm">Log in to your command center.</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Account ID</label>
+                <div className="relative group">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors" size={18} />
+                  <input 
+                    required 
+                    type="text" 
+                    value={email} 
+                    onChange={e => setEmail(e.target.value)} 
+                    className="w-full bg-[#0a1121] border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-white focus:border-blue-600 outline-none transition-all font-medium text-sm" 
+                    placeholder="Username or Email" 
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center px-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Security Key</label>
+                  <button 
+                    type="button" 
+                    onClick={handleForgotClick}
+                    className="text-[10px] font-bold text-blue-500 hover:text-blue-400 uppercase tracking-widest"
+                  >
+                    Forgot?
+                  </button>
+                </div>
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors" size={18} />
+                  <input 
+                    required 
+                    type={showPassword ? "text" : "password"} 
+                    value={password} 
+                    onChange={e => setPassword(e.target.value)} 
+                    className="w-full bg-[#0a1121] border border-white/5 rounded-2xl py-4 pl-12 pr-12 text-white focus:border-blue-600 outline-none transition-all font-medium text-sm" 
+                    placeholder="••••••••" 
+                  />
+                  <button 
+                    type="button" 
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 select-none group cursor-pointer" onClick={() => {}}>
+                <div className="w-5 h-5 rounded border border-white/10 bg-slate-900 flex items-center justify-center transition-all group-hover:border-blue-600">
+                  <div className="w-2.5 h-2.5 bg-blue-600 rounded-sm opacity-0 group-active:opacity-100 transition-opacity"></div>
+                </div>
+                <label className="text-xs text-slate-400 font-medium cursor-pointer">Remember me for 30 days</label>
+              </div>
+
+              <button 
+                type="submit" 
+                disabled={loading} 
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-600/20 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : 'Sign In'}
+              </button>
+            </form>
+
+            <div className="mt-6 relative text-center">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-white/5"></div>
+              </div>
+              <span className="relative bg-[#050b1a] px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Connect with</span>
+            </div>
+
+            <button 
+              onClick={handleGoogleLogin} 
+              className="mt-6 w-full bg-[#0a1121] border border-white/5 py-4 rounded-2xl flex items-center justify-center gap-3 font-bold text-white hover:bg-[#0f172a] transition-all group text-sm"
+            >
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" className="w-4 h-4 group-hover:scale-110 transition-transform" alt="G" />
+              Google
+            </button>
+            <p className="mt-8 text-center text-slate-400 font-medium text-sm">
+              New here? <button onClick={onSwitchToSignup} className="text-blue-500 font-black ml-1 hover:underline">Create Account</button>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
