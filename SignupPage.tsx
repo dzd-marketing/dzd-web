@@ -99,23 +99,31 @@ export default function SignupPage({
       <div className="fixed inset-0 cursor-pointer" onClick={onClose} />
 
       <div className="relative w-full h-full sm:h-auto sm:max-w-5xl bg-white sm:rounded-[2.5rem] shadow-2xl overflow-y-auto sm:overflow-hidden animate-scale-in">
-{/* Premium Success Overlay - Fixed Responsive Styles */}
+{/* Premium Success Overlay - Fixed Alignment */}
 {success && (
   <div className="absolute inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-2xl animate-fade-in">
-    <div className="bg-white/10 border border-white/20 backdrop-blur-3xl p-6 sm:p-8 lg:p-10 rounded-2xl sm:rounded-[2.5rem] max-w-[280px] sm:max-w-sm w-full text-center shadow-[0_0_50px_rgba(59,130,246,0.2)] animate-scale-in mx-4 sm:mx-0">
-      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-blue-600 rounded-xl sm:rounded-2xl flex items-center justify-center text-white mx-auto mb-4 sm:mb-6 shadow-xl shadow-blue-600/40 transform scale-100 sm:scale-110">
-        <Check size={24} className="sm:w-8 sm:h-8" strokeWidth={3} />
+    <div className="bg-white/10 border border-white/20 backdrop-blur-3xl p-8 sm:p-10 rounded-2xl sm:rounded-[2.5rem] w-full max-w-[300px] sm:max-w-sm mx-auto text-center shadow-[0_0_50px_rgba(59,130,246,0.2)] animate-scale-in">
+      <div className="flex justify-center mb-6 sm:mb-8">
+        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl sm:rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-blue-600/40">
+          <Check size={32} className="sm:w-10 sm:h-10" strokeWidth={3} />
+        </div>
       </div>
-      <h2 className="text-xl sm:text-2xl font-black text-white mb-2 sm:mb-3 tracking-tighter uppercase">
+      
+      <h3 className="text-2xl sm:text-3xl font-black text-white mb-3 sm:mb-4 tracking-tighter uppercase">
         Congratulations!
-      </h2>
-      <p className="text-blue-200/60 text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase leading-relaxed">
-        Identity Secured.<br />Initializing Account...
-      </p>
+      </h3>
+      
+      <div className="space-y-1">
+        <p className="text-blue-200/80 text-xs sm:text-sm font-bold tracking-[0.2em] uppercase">
+          Identity Secured.
+        </p>
+        <p className="text-blue-200/60 text-xs sm:text-sm font-bold tracking-[0.2em] uppercase">
+          Initializing Account...
+        </p>
+      </div>
     </div>
   </div>
 )}
-
         {/* Desktop Close Button */}
         <button 
           onClick={onClose} 
