@@ -24,6 +24,7 @@ const getStatusBadges = (name: string) => {
 };
 
 export default function ServicesPageView({ scrollContainerRef }: any) {
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [services, setServices] = useState<any[]>([]);
@@ -77,6 +78,24 @@ export default function ServicesPageView({ scrollContainerRef }: any) {
       window.removeEventListener('scroll', handleScroll);
     };
   }, [lastScrollY]);
+
+  useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.relative')) {
+      setCategoriesOpen(false);
+    }
+  };
+
+  if (categoriesOpen) {
+    window.addEventListener('click', handleClickOutside);
+  } else {
+    window.removeEventListener('click', handleClickOutside);
+  }
+
+  return () => window.removeEventListener('click', handleClickOutside);
+}, [categoriesOpen]);
+
 
   const categories = useMemo(() => {
     return ['All', ...Array.from(new Set(services.map(s => String(s.category))))];
@@ -153,17 +172,37 @@ const scrollToTop = () => {
               />
             </div>
             
-            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 mask-linear-right lg:max-w-md">
-               {categories.slice(0, 15).map(cat => (
-                 <button 
-                  key={cat} 
-                  onClick={() => { setActiveCategory(cat); setVisibleCount(25); }}
-                  className={`px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all border ${activeCategory === cat ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/30' : 'bg-white dark:bg-white/5 text-slate-500 border-slate-200 dark:border-white/5 hover:border-blue-500'}`}
-                 >
-                   {cat}
-                 </button>
-               ))}
-            </div>
+<div className="relative flex flex-col lg:flex-row gap-3">
+  {/* Categories Menu Button */}
+  <div className="relative">
+    <button
+      onClick={() => setCategoriesOpen(!categoriesOpen)}
+      className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl font-bold text-xs shadow-sm hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
+    >
+      Categories
+      <ChevronUp className={`w-4 h-4 transform transition-transform ${categoriesOpen ? 'rotate-180' : ''}`} />
+    </button>
+
+    {/* Dropdown Menu */}
+    {categoriesOpen && (
+      <div className="absolute z-50 mt-2 w-60 max-h-72 overflow-y-auto bg-white dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg p-3">
+        {categories.map(cat => (
+          <button
+            key={cat}
+            onClick={() => { setActiveCategory(cat); setVisibleCount(25); setCategoriesOpen(false); }}
+            className={`block w-full text-left px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wide mb-1 transition-colors ${
+              activeCategory === cat
+                ? 'bg-blue-600 text-white'
+                : 'text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-800'
+            }`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+</div>
           </div>
         </div>
       </div>
@@ -201,7 +240,7 @@ const scrollToTop = () => {
       )}
 
       {/* Services Grid - NO MARGIN/PADDING AT ALL */}
-      <div className="mt-0.5 pt-0.5">
+      <div className="mt-1.0 pt-1.0">
         {/* Desktop Data Grid */}
         <div className="hidden md:block bg-white dark:bg-[#0f172a]/40 rounded-[2.5rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm">
           <table className="w-full text-left">
