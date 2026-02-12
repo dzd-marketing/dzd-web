@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Zap, ChevronDown, LayoutGrid, User, Settings, LogOut, Menu, X, Moon, Sun, CreditCard, Home, ShoppingCart, History, HelpCircle, BarChart3 } from 'lucide-react';
+import { Zap, ChevronDown, LayoutGrid, User, Settings, LogOut, Menu, X, Moon, Sun, CreditCard, Home, ShoppingCart, History, HelpCircle, BarChart3, Wallet, Activity } from 'lucide-react';
 
 export const ThemeToggle = ({ theme, toggleTheme }: { theme: string, toggleTheme: () => void }) => {
   return (
@@ -84,12 +84,11 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
               <a href="#" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors">Support</a>
             </div>
 
-            {/* Desktop Right Section - Keep existing */}
+            {/* Desktop Right Section */}
             <div className="hidden md:flex items-center gap-4">
               <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
               {user ? (
                 <div className="relative" ref={dropdownRef}>
-                  {/* Desktop profile dropdown - keep as is */}
                   <button 
                     onClick={() => setProfileOpen(!profileOpen)}
                     className="flex items-center gap-3 bg-slate-100 dark:bg-white/5 p-1.5 pr-3 rounded-xl border border-slate-200 dark:border-white/10 hover:border-blue-500 transition-colors"
@@ -151,7 +150,7 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
         </div>
       </div>
 
-      {/* Mobile Sidebar - CLEAN & MINIMAL */}
+      {/* Mobile Sidebar */}
       {mounted && (
         <>
           {/* Backdrop */}
@@ -165,147 +164,164 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
           {/* Sidebar Drawer */}
           <div 
             ref={sidebarRef}
-            className={`fixed top-0 right-0 h-full w-[280px] bg-white dark:bg-[#0a0f1c] z-[160] md:hidden shadow-xl transition-transform duration-300 ease-out ${
+            className={`fixed top-0 right-0 h-full w-[280px] bg-white dark:bg-[#0a0f1c] z-[160] md:hidden shadow-xl transition-transform duration-300 ease-out flex flex-col ${
               isOpen ? 'translate-x-0' : 'translate-x-full'
             }`}
           >
-            <div className="h-full flex flex-col overflow-y-auto">
-              
-              {/* Header */}
-              <div className="px-5 py-6 border-b border-slate-100 dark:border-white/5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white">
-                      <Zap size={16} fill="white" />
-                    </div>
-                    <span className="text-base font-black text-slate-900 dark:text-white uppercase">DzD</span>
+            {/* Header - Fixed at top */}
+            <div className="px-5 py-6 border-b border-slate-100 dark:border-white/5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white">
+                    <Zap size={16} fill="white" />
                   </div>
-                  <button 
-                    onClick={closeMobileMenu}
-                    className="p-1.5 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-500"
-                  >
-                    <X size={16} />
-                  </button>
+                  <span className="text-base font-black text-slate-900 dark:text-white uppercase">DZD</span>
+                </div>
+                <button 
+                  onClick={closeMobileMenu}
+                  className="p-1.5 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-500"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+            
+            {/* Scrollable Content Area */}
+            <div className="flex-1 overflow-y-auto px-3 py-4">
+              {/* PUBLIC LINKS */}
+              <div className="mb-6">
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-2">General</p>
+                <div className="space-y-0.5">
+                  <NavItem 
+                    icon={<Home size={16} />} 
+                    label="Home" 
+                    onClick={() => handleNavigation('/')} 
+                  />
+                  <NavItem 
+                    icon={<ShoppingCart size={16} />} 
+                    label="Services" 
+                    onClick={() => {}} 
+                  />
+                  <NavItem 
+                    icon={<HelpCircle size={16} />} 
+                    label="Support" 
+                    onClick={() => {}} 
+                  />
                 </div>
               </div>
               
-              {/* Navigation Links */}
-              <div className="flex-1 px-3 py-4">
-                {/* PUBLIC LINKS - Always visible */}
+              {/* DASHBOARD LINKS - Only when logged in */}
+              {user && (
                 <div className="mb-6">
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-2">General</p>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-2">Dashboard</p>
                   <div className="space-y-0.5">
                     <NavItem 
-                      icon={<Home size={16} />} 
-                      label="Home" 
-                      onClick={() => handleNavigation('/')} 
+                      icon={<LayoutGrid size={16} />} 
+                      label="Dashboard" 
+                      onClick={() => handleNavigation('/dashboard')} 
                     />
                     <NavItem 
                       icon={<ShoppingCart size={16} />} 
-                      label="Services" 
+                      label="My Orders" 
+                      onClick={() => handleNavigation('/orders')} 
+                    />
+                    <NavItem 
+                      icon={<History size={16} />} 
+                      label="Order History" 
+                      onClick={() => handleNavigation('/orders')} 
+                    />
+                    <NavItem 
+                      icon={<BarChart3 size={16} />} 
+                      label="Analytics" 
+                      onClick={() => handleNavigation('/analytics')} 
+                    />
+                    <NavItem 
+                      icon={<CreditCard size={16} />} 
+                      label="Billing" 
                       onClick={() => {}} 
                     />
                     <NavItem 
-                      icon={<HelpCircle size={16} />} 
-                      label="Support" 
+                      icon={<Settings size={16} />} 
+                      label="Settings" 
                       onClick={() => {}} 
                     />
                   </div>
                 </div>
-                
-                {/* DASHBOARD LINKS - Only visible when logged in */}
-                {user && (
-                  <div className="mb-6">
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-2">Dashboard</p>
-                    <div className="space-y-0.5">
-                      <NavItem 
-                        icon={<LayoutGrid size={16} />} 
-                        label="Dashboard" 
-                        onClick={() => handleNavigation('/dashboard')} 
-                      />
-                      <NavItem 
-                        icon={<ShoppingCart size={16} />} 
-                        label="My Orders" 
-                        onClick={() => handleNavigation('/orders')} 
-                      />
-                      <NavItem 
-                        icon={<History size={16} />} 
-                        label="Order History" 
-                        onClick={() => handleNavigation('/orders')} 
-                      />
-                      <NavItem 
-                        icon={<BarChart3 size={16} />} 
-                        label="Analytics" 
-                        onClick={() => handleNavigation('/analytics')} 
-                      />
-                      <NavItem 
-                        icon={<CreditCard size={16} />} 
-                        label="Billing" 
-                        onClick={() => {}} 
-                      />
-                      <NavItem 
-                        icon={<Settings size={16} />} 
-                        label="Settings" 
-                        onClick={() => {}} 
-                      />
+              )}
+            </div>
+            
+            {/* ACCOUNT SECTION - FIXED AT BOTTOM */}
+            <div className="border-t border-slate-100 dark:border-white/5 bg-white dark:bg-[#0a0f1c]">
+              {user ? (
+                <div className="p-4">
+                  {/* User Info Card - Fixed width and alignment */}
+                  <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-3 mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-blue-600 flex-shrink-0 flex items-center justify-center text-white font-black text-sm">
+                        {(user.fullName?.[0] || user.name?.[0] || user.email?.[0] || 'U').toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                          {user.fullName || user.name || 'User'}
+                        </p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                          {user.email}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                )}
-                
-                {/* ACCOUNT SECTION - Changes based on auth state */}
-                <div>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-2">Account</p>
                   
-                  {user ? (
-                    <>
-                      {/* User Info Card */}
-                      <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-3 mb-2 mx-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-sm">
-                            {(user.fullName?.[0] || user.name?.[0] || user.email?.[0] || 'U').toUpperCase()}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user.fullName || user.name || 'User'}</p>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <NavItem 
-                        icon={<User size={16} />} 
-                        label="Profile" 
-                        onClick={() => {}} 
-                      />
-                      <button
-                        onClick={handleSignOut}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors mx-3"
-                        style={{ width: 'calc(100% - 1.5rem)' }}
-                      >
-                        <LogOut size={16} />
-                        Sign Out
-                      </button>
-                    </>
-                  ) : (
-                    <div className="space-y-2 px-3">
-                      <button
-                        onClick={() => { onLoginClick(); closeMobileMenu(); }}
-                        className="w-full px-4 py-2.5 text-xs font-bold text-blue-600 bg-blue-50 dark:bg-blue-950/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
-                      >
-                        Login
-                      </button>
-                      <button
-                        onClick={() => { onSignupClick(); closeMobileMenu(); }}
-                        className="w-full px-4 py-2.5 text-xs font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        Create Account
-                      </button>
+                  {/* Balance & Stats - Row layout */}
+                  <div className="flex items-center justify-between mb-3 px-1">
+                    <div className="flex items-center gap-1.5">
+                      <Wallet size={14} className="text-slate-400" />
+                      <span className="text-xs font-medium text-slate-600 dark:text-slate-300">$0.00</span>
+                      <span className="text-[8px] font-bold text-green-600 bg-green-100 dark:bg-green-950/30 px-1.5 py-0.5 rounded-full ml-1">AVAILABLE</span>
                     </div>
-                  )}
+                    <div className="flex items-center gap-1.5">
+                      <Activity size={14} className="text-slate-400" />
+                      <span className="text-xs font-bold text-blue-600">12</span>
+                      <span className="text-[8px] font-medium text-slate-500">ACTIVE</span>
+                    </div>
+                  </div>
+                  
+                  {/* Action Buttons - Clean layout */}
+                  <div className="space-y-1">
+                    <button
+                      onClick={() => {}}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+                    >
+                      <User size={16} className="text-slate-500" />
+                      Profile
+                    </button>
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors"
+                    >
+                      <LogOut size={16} />
+                      Sign Out
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="p-4 space-y-2">
+                  <button
+                    onClick={() => { onLoginClick(); closeMobileMenu(); }}
+                    className="w-full px-4 py-2.5 text-xs font-bold text-blue-600 bg-blue-50 dark:bg-blue-950/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+                  >
+                    Login
+                  </button>
+                  <button
+                    onClick={() => { onSignupClick(); closeMobileMenu(); }}
+                    className="w-full px-4 py-2.5 text-xs font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Create Account
+                  </button>
+                </div>
+              )}
               
-              {/* Footer */}
-              <div className="px-5 py-4 border-t border-slate-100 dark:border-white/5">
+              {/* Footer - Attached to bottom of account section */}
+              <div className="px-4 pb-4 pt-1">
                 <div className="flex items-center justify-between">
                   <span className="text-[8px] font-medium text-slate-400 uppercase tracking-wider">v2.0.0</span>
                   <span className="text-[8px] font-medium text-slate-400">© 2024 DzD</span>
