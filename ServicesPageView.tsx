@@ -259,7 +259,7 @@ const scrollToTop = () => {
       )}
 
       {/* Services Grid - NO MARGIN/PADDING AT ALL */}
-      <div className="mt-1.0 pt-1.0">
+      <div className="mt-1.5 pt-1.5">
         {/* Desktop Data Grid */}
         <div className="hidden md:block bg-white dark:bg-[#0f172a]/40 rounded-[2.5rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm">
           <table className="w-full text-left">
