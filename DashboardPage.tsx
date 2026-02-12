@@ -22,29 +22,38 @@ const API_KEY = "ddaac158a07c133069b875419234d8e3";
 const BASE_URL = "https://makemetrend.online/api/v2";
 
 /**
- * Enhanced API Fetcher using corsproxy.io for better reliability
- * Bypass CORS and handle common SMM API parameters
+ * PRIVATE PROXY FETCHER
+ * This uses the /api/proxy serverless function to bypass CORS.
+ * Ensure you deploy the api/proxy.ts file to your Vercel project.
  */
 export const fetchSmmApi = async (params: Record<string, string>) => {
-  const urlParams = new URLSearchParams({ ...params, key: API_KEY }).toString();
-  const targetUrl = `${BASE_URL}?${urlParams}`;
+  // Use a relative path if the proxy is co-located in the same project
+  // Or replace with your full vercel URL: e.g., https://your-app.vercel.app/api/proxy
+  const proxyEndpoint = "/api/proxy";
   
-  // Using corsproxy.io - much more stable than allorigins for this specific API
-  const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
-  
+  // We send the parameters in the body via POST for maximum reliability with SMM APIs
+  const payload = {
+    ...params,
+    key: API_KEY
+  };
+
   try {
-    const response = await fetch(proxyUrl, {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' }
+    const response = await fetch(`${proxyEndpoint}?url=${encodeURIComponent(BASE_URL)}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
     });
     
     if (!response.ok) {
-      throw new Error(`Connection Error: ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(`Proxy Error (${response.status}): ${errorText}`);
     }
     
     return await response.json();
   } catch (error) {
-    console.error("Fetch Execution Failed:", error);
+    console.error("Critical SMM Node Failure:", error);
     throw error;
   }
 };
@@ -64,14 +73,14 @@ export default function DashboardPage({ user }: any) {
           setBalance(data.balance);
         }
       } catch (err) {
-        console.error("Balance Protocol Sync Failed");
+        console.error("Balance Protocol Sync Failed. Proxy might be offline.");
       } finally {
         setLoadingBalance(false);
       }
     };
     
     updateBalance();
-    const interval = setInterval(updateBalance, 45000); // Sync every 45s
+    const interval = setInterval(updateBalance, 60000); // Sync every 60s
     return () => clearInterval(interval);
   }, []);
 
@@ -88,7 +97,7 @@ export default function DashboardPage({ user }: any) {
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-dark pt-20 overflow-hidden font-sans">
       
-      {/* DESKTOP SIDEBAR - Hidden on Mobile */}
+      {/* DESKTOP SIDEBAR */}
       <aside 
         className={`hidden md:flex relative z-40 bg-white dark:bg-[#050b1a] border-r border-slate-200 dark:border-white/5 transition-all duration-500 ease-in-out flex-col ${sidebarOpen ? 'w-80' : 'w-24'}`}
       >
@@ -127,11 +136,11 @@ export default function DashboardPage({ user }: any) {
         <div className="p-4 border-t border-slate-100 dark:border-white/5">
            <div className={`bg-blue-600/5 dark:bg-blue-600/10 rounded-[1.5rem] p-5 transition-all overflow-hidden ${sidebarOpen ? 'block' : 'hidden'}`}>
              <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-1.5 flex items-center gap-2">
-               <Activity size={10} className={loadingBalance ? 'animate-pulse' : ''} /> Status: Online
+               <Activity size={10} className={loadingBalance ? 'animate-pulse' : ''} /> Matrix: Online
              </p>
              <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Credit</p>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Balance</p>
                   <p className="text-xl font-black text-slate-900 dark:text-white leading-tight">${balance || '0.00'}</p>
                 </div>
                 <button className="bg-blue-600 p-2.5 rounded-xl text-white shadow-lg hover:scale-110 transition-transform">
@@ -149,32 +158,29 @@ export default function DashboardPage({ user }: any) {
         </div>
       </aside>
 
-      {/* MAIN CONTENT AREA - SUPER RESPONSIVE */}
+      {/* MAIN CONTENT AREA */}
       <main className="flex-1 overflow-y-auto no-scrollbar p-4 md:p-8 lg:p-12 relative pb-32 md:pb-12 bg-[#fcfdfe] dark:bg-[#020617]">
-        {/* Dynamic Background Design */}
         <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none"></div>
-        <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-blue-600/5 blur-[120px] rounded-full pointer-events-none"></div>
 
         <div className="max-w-6xl mx-auto relative z-10">
           {activeTab === 'home' && <DashboardHomeView user={user} balance={balance} />}
           {activeTab === 'services' && <ServicesPageView />}
           
-          {/* Placeholder for unimplemented tabs */}
           {(!['home', 'services'].includes(activeTab)) && (
             <div className="h-[60vh] flex flex-col items-center justify-center text-center animate-fade-in bg-white dark:bg-white/5 rounded-[3.5rem] border border-slate-200 dark:border-white/5 p-12">
-              <div className="w-24 h-24 bg-blue-600/10 dark:bg-blue-600/20 rounded-[2.5rem] flex items-center justify-center text-blue-600 mb-8 border border-blue-500/20">
+              <div className="w-24 h-24 bg-blue-600/10 rounded-[2.5rem] flex items-center justify-center text-blue-600 mb-8 border border-blue-500/20">
                 <Activity size={40} className="animate-pulse" />
               </div>
-              <h2 className="text-3xl font-black uppercase tracking-tighter text-slate-900 dark:text-white mb-3">Protocol: {activeTab}</h2>
+              <h2 className="text-3xl font-black uppercase tracking-tighter text-slate-900 dark:text-white mb-3">Node: {activeTab}</h2>
               <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px] max-w-sm leading-relaxed">
-                The secure link for this operational node is being established in the global empire matrix.
+                Establishing encrypted link to the {activeTab} protocol hub.
               </p>
             </div>
           )}
         </div>
       </main>
 
-      {/* MOBILE BOTTOM NAV - Visible only on small screens */}
+      {/* MOBILE BOTTOM NAV */}
       <nav className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] bg-white/70 dark:bg-[#050b1a]/70 backdrop-blur-3xl border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-2.5 flex items-center justify-around shadow-[0_25px_60px_-15px_rgba(0,0,0,0.4)] z-[200]">
         {menuItems.slice(0, 4).map(item => (
           <button 
@@ -183,10 +189,9 @@ export default function DashboardPage({ user }: any) {
             className={`p-4 rounded-[1.8rem] transition-all relative flex flex-col items-center justify-center ${activeTab === item.id ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/40 -translate-y-6 scale-110' : 'text-slate-500'}`}
           >
             {React.cloneElement(item.icon as any, { size: 22, strokeWidth: activeTab === item.id ? 2.5 : 2 })}
-            {activeTab === item.id && <div className="absolute -bottom-1.5 w-1.5 h-1.5 bg-white rounded-full"></div>}
           </button>
         ))}
-        <button className="p-4 rounded-[1.8rem] text-slate-500 active:bg-slate-100 dark:active:bg-white/5">
+        <button className="p-4 rounded-[1.8rem] text-slate-500">
            <Menu size={22} />
         </button>
       </nav>
