@@ -32,19 +32,23 @@ export default function ServicesPageView() {
   const [visibleCount, setVisibleCount] = useState(25);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const lastScrollY = useRef(0);
 
   const PAGE_SIZE = 40;
 
-  // Scroll detection for mobile header and scroll button
+  // Scroll detection for mobile header - COMPLETELY HIDE when scrolling
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       
-      // Hide header on mobile when scrolled down, show at top
-      if (window.innerWidth < 768) { // Only for mobile
-        if (currentScrollY > 20) {
+      // Only for mobile
+      if (window.innerWidth < 768) {
+        // If scrolling down and past 10px, hide header
+        if (currentScrollY > lastScrollY.current && currentScrollY > 10) {
           setIsHeaderVisible(false);
-        } else {
+        } 
+        // If scrolling up to top, show header
+        else if (currentScrollY < 10) {
           setIsHeaderVisible(true);
         }
       } else {
@@ -53,6 +57,8 @@ export default function ServicesPageView() {
 
       // Show scroll to top button when scrolled down
       setShowScrollTop(currentScrollY > 300);
+      
+      lastScrollY.current = currentScrollY;
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -113,13 +119,13 @@ export default function ServicesPageView() {
 
   return (
     <div className="relative animate-fade-in pb-32">
-      {/* Sticky Command Bridge - Frosted UI - Hides on mobile scroll */}
+      {/* Sticky Command Bridge - COMPLETELY HIDES when scrolling on mobile */}
       <div className={`
-        sticky top-0 md:top-[-2rem] z-40 -mx-4 md:-mx-8 lg:-mx-12 px-4 md:px-8 lg:px-12 
+        fixed md:sticky top-0 left-0 right-0 z-40 px-4 md:px-8 lg:px-12 
         pt-4 md:pt-8 pb-4 bg-[#fcfdfe]/95 dark:bg-[#020617]/95 backdrop-blur-2xl 
         border-b border-slate-200 dark:border-white/5 shadow-sm transition-all duration-300
-        ${isHeaderVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'}
-        md:translate-y-0 md:opacity-100
+        ${isHeaderVisible ? 'translate-y-0' : '-translate-y-full'}
+        md:translate-y-0
       `}>
         <div className="max-w-6xl mx-auto space-y-3 md:space-y-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 md:gap-4">
@@ -168,13 +174,13 @@ export default function ServicesPageView() {
         </div>
       </div>
 
-      {/* Mobile Spacer - More compact when header hidden */}
+      {/* Mobile Spacer - Pushes content below fixed header */}
       <div className={`
         md:hidden transition-all duration-300
-        ${isHeaderVisible ? 'h-0' : 'h-4'} 
+        ${isHeaderVisible ? 'h-[140px]' : 'h-0'}
       `} />
 
-      <div className="mt-4 md:mt-8">
+      <div className="mt-4 md:mt-8 px-4 md:px-8 lg:px-12">
         {/* Desktop Data Grid */}
         <div className="hidden md:block bg-white dark:bg-[#0f172a]/40 rounded-[2.5rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm">
           <table className="w-full text-left">
@@ -230,8 +236,8 @@ export default function ServicesPageView() {
           </table>
         </div>
 
-        {/* Mobile Grid Layout - Dynamic Cards */}
-        <div className="md:hidden space-y-3 px-1">
+        {/* Mobile Grid Layout - FULL SERVICE NAME VISIBLE */}
+        <div className="md:hidden space-y-3">
           {loading ? (
              <div className="py-16 text-center">
                <Loader2 className="mx-auto animate-spin text-blue-600" size={32} />
@@ -241,14 +247,17 @@ export default function ServicesPageView() {
             visibleServices.map((service: any) => (
               <div key={service.service} className="bg-white dark:bg-white/5 p-4 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm active:scale-[0.98] transition-all">
                 <div className="flex justify-between items-start gap-3 mb-3">
-                   <div className="flex-1">
+                   <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
                         <span className="text-[7px] font-black text-blue-500 uppercase bg-blue-500/10 px-1.5 py-0.5 rounded-md">ID: {service.service}</span>
                         {getStatusBadges(service.name).map((b, idx) => (
                           <span key={idx} className={`${b.color} border text-[6px] font-black px-1.5 py-0.5 rounded-md`}>{b.text}</span>
                         ))}
                       </div>
-                      <h4 className="font-black text-slate-900 dark:text-white text-xs leading-tight tracking-tight line-clamp-2">{service.name}</h4>
+                      {/* FULL SERVICE NAME - NO TRUNCATION */}
+                      <h4 className="font-black text-slate-900 dark:text-white text-xs leading-normal tracking-tight break-words">
+                        {service.name}
+                      </h4>
                    </div>
                    <button className="shrink-0 w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
                      <PlusCircle size={18} />
@@ -277,7 +286,7 @@ export default function ServicesPageView() {
 
       {/* Infinite Scroll Interface */}
       {!loading && filteredServices.length > visibleCount && (
-        <div className="flex flex-col items-center gap-4 mt-8 mb-10">
+        <div className="flex flex-col items-center gap-4 mt-8 mb-10 px-4">
           <div className="h-1 w-24 bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
              <div 
                className="h-full bg-blue-600 transition-all duration-500" 
@@ -315,7 +324,7 @@ export default function ServicesPageView() {
 
       {/* Error States */}
       {error && !loading && (
-        <div className="py-16 text-center">
+        <div className="py-16 text-center px-4">
           <div className="bg-red-500/10 text-red-500 p-6 rounded-2xl border border-red-500/20 max-w-sm mx-auto inline-block">
              <Zap size={24} className="mx-auto mb-3" />
              <p className="text-[9px] font-black uppercase tracking-widest">{error}</p>
