@@ -36,23 +36,21 @@ export default function ServicesPageView() {
 
   const PAGE_SIZE = 40;
 
-  // Scroll detection for mobile header - COMPLETELY HIDE when scrolling
+  // Scroll detection for header - FIXED to show on initial load
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       
-      // Only for mobile
+      // For mobile - hide when scrolling down, show when at top
       if (window.innerWidth < 768) {
-        // If scrolling down and past 10px, hide header
-        if (currentScrollY > lastScrollY.current && currentScrollY > 10) {
+        if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
           setIsHeaderVisible(false);
-        } 
-        // If scrolling up to top, show header
-        else if (currentScrollY < 10) {
+        } else if (currentScrollY < 50) {
           setIsHeaderVisible(true);
         }
       } else {
-        setIsHeaderVisible(true); // Always show on desktop
+        // For desktop - ALWAYS SHOW HEADER, no hiding
+        setIsHeaderVisible(true);
       }
 
       // Show scroll to top button when scrolled down
@@ -62,7 +60,10 @@ export default function ServicesPageView() {
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // Call once to set initial state
+    
+    // IMPORTANT: Set header visible on initial load
+    setIsHeaderVisible(true);
+    
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -113,24 +114,25 @@ export default function ServicesPageView() {
       top: 0,
       behavior: 'smooth'
     });
-    // Force header to show when manually scrolling to top
     setIsHeaderVisible(true);
   };
 
   return (
     <div className="relative animate-fade-in pb-32">
-      {/* Sticky Command Bridge - COMPLETELY HIDES when scrolling on mobile */}
+      {/* Protocol Directory Header - ALWAYS VISIBLE ON DESKTOP, hides on mobile scroll */}
       <div className={`
         fixed md:sticky top-0 left-0 right-0 z-40 px-4 md:px-8 lg:px-12 
         pt-4 md:pt-8 pb-4 bg-[#fcfdfe]/95 dark:bg-[#020617]/95 backdrop-blur-2xl 
-        border-b border-slate-200 dark:border-white/5 shadow-sm transition-all duration-300
+        border-b border-slate-200 dark:border-white/5 shadow-sm transition-transform duration-300
         ${isHeaderVisible ? 'translate-y-0' : '-translate-y-full'}
         md:translate-y-0
       `}>
-        <div className="max-w-6xl mx-auto space-y-3 md:space-y-6">
+        <div className="max-w-7xl mx-auto space-y-3 md:space-y-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 md:gap-4">
             <div>
-              <h1 className="text-xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">Protocol Directory</h1>
+              <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
+                Protocol Directory
+              </h1>
               <p className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-[0.3em] text-[9px] mt-1.5 flex items-center gap-2">
                 <Activity size={10} className="text-blue-500 animate-pulse" />
                 {filteredServices.length} Active Entry Nodes
@@ -160,27 +162,34 @@ export default function ServicesPageView() {
             </div>
             
             <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 mask-linear-right lg:max-w-md">
-               {categories.slice(0, 15).map(cat => (
-                 <button 
+              {categories.slice(0, 15).map(cat => (
+                <button 
                   key={cat} 
                   onClick={() => { setActiveCategory(cat); setVisibleCount(25); }}
-                  className={`px-4 md:px-5 py-2.5 md:py-3 rounded-lg md:rounded-xl text-[8px] md:text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all border ${activeCategory === cat ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/30' : 'bg-white dark:bg-white/5 text-slate-500 border-slate-200 dark:border-white/5 hover:border-blue-500'}`}
-                 >
-                   {cat}
-                 </button>
-               ))}
+                  className={`px-4 md:px-5 py-2.5 md:py-3 rounded-lg md:rounded-xl text-[8px] md:text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all border ${
+                    activeCategory === cat 
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/30' 
+                      : 'bg-white dark:bg-white/5 text-slate-500 border-slate-200 dark:border-white/5 hover:border-blue-500'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Mobile Spacer - Pushes content below fixed header */}
+      {/* Mobile Spacer - Adjusts based on header visibility */}
       <div className={`
         md:hidden transition-all duration-300
         ${isHeaderVisible ? 'h-[140px]' : 'h-0'}
       `} />
 
-      <div className="mt-4 md:mt-8 px-4 md:px-8 lg:px-12">
+      {/* Desktop Spacer - Always present for sticky header */}
+      <div className="hidden md:block h-[120px] lg:h-[140px]" />
+
+      <div className="px-4 md:px-8 lg:px-12">
         {/* Desktop Data Grid */}
         <div className="hidden md:block bg-white dark:bg-[#0f172a]/40 rounded-[2.5rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm">
           <table className="w-full text-left">
@@ -206,12 +215,14 @@ export default function ServicesPageView() {
                   <tr key={service.service} className="hover:bg-blue-600/5 transition-all group cursor-default">
                     <td className="px-8 py-6 font-black text-blue-600 text-xs">#{service.service}</td>
                     <td className="px-8 py-6">
-                      <div className="flex gap-2 mb-2">
+                      <div className="flex gap-2 mb-2 flex-wrap">
                         {getStatusBadges(service.name).map((b, idx) => (
                           <span key={idx} className={`${b.color} border text-[7px] font-black px-1.5 py-0.5 rounded-md`}>{b.text}</span>
                         ))}
                       </div>
-                      <p className="font-bold text-slate-900 dark:text-white text-sm leading-snug group-hover:text-blue-500 transition-colors">{service.name}</p>
+                      <p className="font-bold text-slate-900 dark:text-white text-sm leading-snug group-hover:text-blue-500 transition-colors">
+                        {service.name}
+                      </p>
                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1.5 flex items-center gap-1.5 opacity-60">
                         <Globe size={10} /> {service.category}
                       </p>
@@ -223,56 +234,65 @@ export default function ServicesPageView() {
                       </span>
                     </td>
                     <td className="px-8 py-6 text-center">
-                       <button className="bg-blue-600 text-white p-2.5 rounded-xl hover:scale-110 active:scale-95 transition-all shadow-lg shadow-blue-600/20">
-                         <PlusCircle size={18} />
-                       </button>
+                      <button className="bg-blue-600 text-white p-2.5 rounded-xl hover:scale-110 active:scale-95 transition-all shadow-lg shadow-blue-600/20">
+                        <PlusCircle size={18} />
+                      </button>
                     </td>
                   </tr>
                 ))
               ) : (
-                <tr><td colSpan={5} className="py-20 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Protocol mismatch: Sector empty</td></tr>
+                <tr>
+                  <td colSpan={5} className="py-20 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    Protocol mismatch: Sector empty
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
         </div>
 
-        {/* Mobile Grid Layout - FULL SERVICE NAME VISIBLE */}
+        {/* Mobile Grid Layout - Full Service Names */}
         <div className="md:hidden space-y-3">
           {loading ? (
-             <div className="py-16 text-center">
-               <Loader2 className="mx-auto animate-spin text-blue-600" size={32} />
-               <p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.4em] mt-4">Establishing Matrix Link...</p>
-             </div>
+            <div className="py-16 text-center">
+              <Loader2 className="mx-auto animate-spin text-blue-600" size={32} />
+              <p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.4em] mt-4">Establishing Matrix Link...</p>
+            </div>
           ) : visibleServices.length > 0 ? (
             visibleServices.map((service: any) => (
               <div key={service.service} className="bg-white dark:bg-white/5 p-4 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm active:scale-[0.98] transition-all">
                 <div className="flex justify-between items-start gap-3 mb-3">
-                   <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                        <span className="text-[7px] font-black text-blue-500 uppercase bg-blue-500/10 px-1.5 py-0.5 rounded-md">ID: {service.service}</span>
-                        {getStatusBadges(service.name).map((b, idx) => (
-                          <span key={idx} className={`${b.color} border text-[6px] font-black px-1.5 py-0.5 rounded-md`}>{b.text}</span>
-                        ))}
-                      </div>
-                      {/* FULL SERVICE NAME - NO TRUNCATION */}
-                      <h4 className="font-black text-slate-900 dark:text-white text-xs leading-normal tracking-tight break-words">
-                        {service.name}
-                      </h4>
-                   </div>
-                   <button className="shrink-0 w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
-                     <PlusCircle size={18} />
-                   </button>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                      <span className="text-[7px] font-black text-blue-500 uppercase bg-blue-500/10 px-1.5 py-0.5 rounded-md">
+                        ID: {service.service}
+                      </span>
+                      {getStatusBadges(service.name).map((b, idx) => (
+                        <span key={idx} className={`${b.color} border text-[6px] font-black px-1.5 py-0.5 rounded-md`}>
+                          {b.text}
+                        </span>
+                      ))}
+                    </div>
+                    <h4 className="font-black text-slate-900 dark:text-white text-xs leading-normal tracking-tight break-words whitespace-normal">
+                      {service.name}
+                    </h4>
+                  </div>
+                  <button className="shrink-0 w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
+                    <PlusCircle size={18} />
+                  </button>
                 </div>
                 
                 <div className="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-white/5">
-                   <div>
-                      <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Rate / 1k</p>
-                      <p className="text-base font-black text-slate-900 dark:text-white tracking-tighter">${service.rate}</p>
-                   </div>
-                   <div className="text-right">
-                      <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Payload range</p>
-                      <p className="text-[9px] font-black text-slate-500 tracking-tighter">{service.min.toLocaleString()} - {service.max.toLocaleString()}</p>
-                   </div>
+                  <div>
+                    <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Rate / 1k</p>
+                    <p className="text-base font-black text-slate-900 dark:text-white tracking-tighter">${service.rate}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Payload range</p>
+                    <p className="text-[9px] font-black text-slate-500 tracking-tighter">
+                      {service.min.toLocaleString()} - {service.max.toLocaleString()}
+                    </p>
+                  </div>
                 </div>
               </div>
             ))
@@ -288,10 +308,10 @@ export default function ServicesPageView() {
       {!loading && filteredServices.length > visibleCount && (
         <div className="flex flex-col items-center gap-4 mt-8 mb-10 px-4">
           <div className="h-1 w-24 bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
-             <div 
-               className="h-full bg-blue-600 transition-all duration-500" 
-               style={{ width: `${(visibleCount / filteredServices.length) * 100}%` }}
-             ></div>
+            <div 
+              className="h-full bg-blue-600 transition-all duration-500" 
+              style={{ width: `${(visibleCount / filteredServices.length) * 100}%` }}
+            />
           </div>
           <button 
             onClick={handleLoadMore}
@@ -302,7 +322,7 @@ export default function ServicesPageView() {
         </div>
       )}
 
-      {/* Floating Scroll To Top for Mobile UX - Now Working */}
+      {/* Floating Scroll To Top Button */}
       {showScrollTop && (
         <button 
           onClick={scrollToTop}
@@ -326,9 +346,14 @@ export default function ServicesPageView() {
       {error && !loading && (
         <div className="py-16 text-center px-4">
           <div className="bg-red-500/10 text-red-500 p-6 rounded-2xl border border-red-500/20 max-w-sm mx-auto inline-block">
-             <Zap size={24} className="mx-auto mb-3" />
-             <p className="text-[9px] font-black uppercase tracking-widest">{error}</p>
-             <button onClick={loadServices} className="mt-3 px-4 py-2 bg-red-500 text-white rounded-lg text-[8px] font-black uppercase">Force Re-Entry</button>
+            <Zap size={24} className="mx-auto mb-3" />
+            <p className="text-[9px] font-black uppercase tracking-widest">{error}</p>
+            <button 
+              onClick={loadServices} 
+              className="mt-3 px-4 py-2 bg-red-500 text-white rounded-lg text-[8px] font-black uppercase"
+            >
+              Force Re-Entry
+            </button>
           </div>
         </div>
       )}
