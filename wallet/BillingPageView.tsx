@@ -6,7 +6,7 @@ import {
   Activity
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { auth } from './firebase'; // Import Firebase auth
+import { auth } from '../firebase'; // Import Firebase auth
 
 const WORKER_URL = "https://dzd-billing-api.sitewasd2026.workers.dev";
 
