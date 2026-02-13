@@ -12,8 +12,8 @@ import { useNavigate } from 'react-router-dom';
 const WORKER_URL = "https://dzd-billing-api.sitewasd2026.workers.dev";
 
 export default function BillingPageView({ user }: any) {
-  const navigate = useNavigate(); // Add this line
-  const [isAuthChecked, setIsAuthChecked] = useState(false); // Add this line
+  const navigate = useNavigate();
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
   const [amount, setAmount] = useState('');
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -28,47 +28,53 @@ export default function BillingPageView({ user }: any) {
     show: false, msg: '', type: 'success'
   });
 
-  // Add this right after all your useState declarations, before any other code
-if (!isAuthChecked) {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-[#fcfdfe] dark:bg-[#020617]">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.4em]">
-          AUTHENTICATING...
-        </p>
-      </div>
-    </div>
-  );
-}
-
-if (!user) return null;
-
-  // --- REDIRECT LOGIC ---
-useEffect(() => {
-  // Check if user is authenticated
-  const isAuthenticated = user && user.uid;
-  
-  if (!isAuthenticated) {
-    // Use navigate for react-router-dom
-    navigate('/LoginPage');
-  } else {
-    // User is authenticated, proceed
-    setIsAuthChecked(true);
-  }
-}, [user, navigate]);
-
-  // Load cleared notifications from localStorage on mount
+  // --- 1. FIRST: Redirect logic useEffect ---
   useEffect(() => {
-    if (user?.uid) {
+    // Check if user is authenticated
+    const isAuthenticated = user && user.uid;
+    
+    if (!isAuthenticated) {
+      navigate('/LoginPage');
+    } else {
+      // User is authenticated, proceed
+      setIsAuthChecked(true);
+    }
+  }, [user, navigate]);
+
+  // --- 2. SECOND: Load cleared notifications from localStorage ---
+  useEffect(() => {
+    if (user?.uid && isAuthChecked) {
       const saved = localStorage.getItem(`cleared_notifs_${user?.uid}`);
       if (saved) setClearedNotifications(JSON.parse(saved));
     }
-  }, [user]);
+  }, [user, isAuthChecked]);
 
-  // User නැතිනම් කිසිවක් Render නොකරයි (Redirect වෙන තෙක්)
+  // --- 3. THIRD: Fetch balance and history ---
+  useEffect(() => {
+    if (user?.uid && isAuthChecked) {
+      fetchBalance(user.uid);
+      fetchHistory(user.uid);
+    }
+  }, [user, isAuthChecked, clearedNotifications]);
+
+  // --- 4. FOURTH: Loading check (AFTER all useEffects) ---
+  if (!isAuthChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#fcfdfe] dark:bg-[#020617]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.4em]">
+            AUTHENTICATING...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // --- 5. FIFTH: User check ---
   if (!user) return null;
 
+  // --- 6. THEN: All your functions ---
   const showNotification = (msg: string, type: 'success' | 'error') => {
     setToast({ show: true, msg, type });
     setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000);
@@ -98,13 +104,6 @@ useEffect(() => {
       setNotifications(alerts);
     } catch (error) { console.error(error); }
   };
-
-useEffect(() => {
-  if (user?.uid && isAuthChecked) { // Add isAuthChecked here
-    fetchBalance(user.uid);
-    fetchHistory(user.uid);
-  }
-}, [user, isAuthChecked, clearedNotifications]); // Add isAuthChecked to dependencies
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -148,7 +147,7 @@ useEffect(() => {
   };
 
   return (
-    <div className="animate-fade-in space-y-8 pb-20 px-4 md:px-8 pt-24 md:pt-28 max-w-7xl mx-auto overflow-hidden relative min-h-screen">
+    <div className="animate-fade-in space-y-8 pb-20 px-4 md:px-8 pt-24 md:pt-28 max-w-7xl mx-auto overflow-hidden relative min-h-screen">      
       
       {/* --- TOAST --- */}
       {toast.show && (
