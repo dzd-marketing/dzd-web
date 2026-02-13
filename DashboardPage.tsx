@@ -20,7 +20,7 @@ import DashboardHomeView from './DashboardHomeView';
 import ServicesPageView from './ServicesPageView';
 import OrdersPageView from './OrdersPageView';
 import Tickets from './Tickets';
-import Wallet from './wallet/BillingPageView';
+import WalletPage from './wallet/BillingPageView';
 
 const API_KEY = "ddaac158a07c133069b875419234d8e3";
 const BASE_URL = "https://makemetrend.online/api/v2";
@@ -132,7 +132,6 @@ export default function DashboardPage({ user }: any) {
           ))}
         </div>
 
-        {/* COMMENTED OUT SIDEBAR FOOTER - TESTING PURPOSES 
         <div className="p-4 border-t border-slate-100 dark:border-white/5">
           <div className={`transition-all duration-300 overflow-hidden ${sidebarOpen ? 'block' : 'hidden'}`}>
             <div className="bg-gradient-to-br from-blue-600/5 to-blue-600/10 rounded-xl p-4 border border-blue-600/10">
@@ -159,7 +158,6 @@ export default function DashboardPage({ user }: any) {
             </div>
           )}
         </div>
-        COMMENTED OUT SIDEBAR FOOTER - TESTING PURPOSES */}
       </aside>
 
 {/* MAIN CONTENT AREA */}
@@ -185,7 +183,7 @@ export default function DashboardPage({ user }: any) {
     )}
 
     {activeTab === 'wallet' && (
-      <Wallet scrollContainerRef={mainRef} />
+      <WalletPage scrollContainerRef={mainRef} />
     )}
     
     {!['home', 'services', 'orders', 'tickets', 'wallet'].includes(activeTab) && (
