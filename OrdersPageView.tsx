@@ -30,6 +30,7 @@ import {
   updateOrderStatus 
 } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { useLocation, useNavigate } from 'react-router-dom'; // Add useNavigate
 
 // Order status badge component
 const getOrderStatusBadge = (status: string) => {
@@ -70,6 +71,7 @@ const formatDate = (dateString: string) => {
 
 export default function OrdersPageView({ scrollContainerRef }: any) {
   const location = useLocation();
+  const navigate = useNavigate();
   // Refs
   const dropdownRef = useRef(null);
   const dateDropdownRef = useRef(null);
