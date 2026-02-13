@@ -69,6 +69,7 @@ const formatDate = (dateString: string) => {
 };
 
 export default function OrdersPageView({ scrollContainerRef }: any) {
+  const location = useLocation();
   // Refs
   const dropdownRef = useRef(null);
   const dateDropdownRef = useRef(null);
@@ -115,6 +116,31 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
   // ============================================
   // AUTH STATE LISTENER
   // ============================================
+
+  useEffect(() => {
+  const state = location.state as any;
+  if (state?.selectedService) {
+    const { id, name, rate, min, max } = state.selectedService;
+    
+    // Set the selected service
+    setSelectedService(name);
+    setSelectedServiceId(id);
+    setServiceDetails({
+      service: parseInt(id),
+      name: name,
+      rate: rate,
+      min: min,
+      max: max
+    });
+    
+    // Auto-set quantity to minimum
+    setQuantity(min.toString());
+    
+    // Clear the state so it doesn't persist on refresh
+    navigate(location.pathname, { replace: true, state: {} });
+  }
+}, [location.state, navigate]);
+  
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
