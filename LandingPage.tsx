@@ -414,7 +414,7 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
               <RevealSection>
                 <div className="inline-flex items-center gap-2 bg-blue-600/10 dark:bg-blue-500/20 border border-blue-600/30 px-4 py-2 rounded-full mb-4 sm:mb-6">
                   <Sparkles size={14} className="text-blue-600 dark:text-blue-400" />
-                  <span className="text-blue-600 dark:text-blue-400 text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em]">#1 Rated SMM Panel 2024</span>
+                  <span className="text-blue-600 dark:text-blue-400 text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em]">#1 Rated SMM Panel 2026</span>
                 </div>
                 
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white leading-[1.1] mb-4 sm:mb-6 tracking-tighter">
