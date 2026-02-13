@@ -4,6 +4,7 @@ import {
   AlertCircle, Wallet as WalletIcon, History, MessageSquare, 
   ArrowUpRight, Clock, CheckCircle2, Copy, Check, Bell, X, Trash2
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 // සටහන: ඔබ Next.js භාවිතා කරන්නේ නම් 'next/router' භාවිතා කරන්න. 
 // නැතිනම් window.location.href මගින් redirect කළ හැක.
@@ -11,6 +12,8 @@ import {
 const WORKER_URL = "https://dzd-billing-api.sitewasd2026.workers.dev";
 
 export default function BillingPageView({ user }: any) {
+  const navigate = useNavigate(); // Add this line
+  const [isAuthChecked, setIsAuthChecked] = useState(false); // Add this line
   const [amount, setAmount] = useState('');
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -25,13 +28,35 @@ export default function BillingPageView({ user }: any) {
     show: false, msg: '', type: 'success'
   });
 
+  // Add this right after all your useState declarations, before any other code
+if (!isAuthChecked) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#fcfdfe] dark:bg-[#020617]">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.4em]">
+          AUTHENTICATING...
+        </p>
+      </div>
+    </div>
+  );
+}
+
+if (!user) return null;
+
   // --- REDIRECT LOGIC ---
-  useEffect(() => {
-    // පරිශීලකයා ලොග් වී නැත්නම් Login page එකට යොමු කරයි
-    if (!user) {
-      window.location.href = "/LoginPage"; // ඔබේ login page එකේ url එක මෙතනට දාන්න
-    }
-  }, [user]);
+useEffect(() => {
+  // Check if user is authenticated
+  const isAuthenticated = user && user.uid;
+  
+  if (!isAuthenticated) {
+    // Use navigate for react-router-dom
+    navigate('/LoginPage');
+  } else {
+    // User is authenticated, proceed
+    setIsAuthChecked(true);
+  }
+}, [user, navigate]);
 
   // Load cleared notifications from localStorage on mount
   useEffect(() => {
@@ -74,12 +99,12 @@ export default function BillingPageView({ user }: any) {
     } catch (error) { console.error(error); }
   };
 
-  useEffect(() => {
-    if (user?.uid) {
-      fetchBalance(user.uid);
-      fetchHistory(user.uid);
-    }
-  }, [user, clearedNotifications]);
+useEffect(() => {
+  if (user?.uid && isAuthChecked) { // Add isAuthChecked here
+    fetchBalance(user.uid);
+    fetchHistory(user.uid);
+  }
+}, [user, isAuthChecked, clearedNotifications]); // Add isAuthChecked to dependencies
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
