@@ -95,7 +95,7 @@ export default function DashboardPage({ user }: any) {
     { id: 'home', label: 'Dashboard', icon: <LayoutGrid />, color: 'text-blue-500' },
     { id: 'services', label: 'Services', icon: <List />, color: 'text-indigo-500' },
     { id: 'orders', label: 'Orders', icon: <History />, color: 'text-pink-500' },
-    { id: 'Wallet', label: 'Wallet', icon: <Wallet />, color: 'text-amber-500' },
+    { id: 'wallet', label: 'Wallet', icon: <Wallet />, color: 'text-amber-500' },
     { id: 'tickets', label: 'Tickets', icon: <Ticket />, color: 'text-slate-500' }
   ];
 
