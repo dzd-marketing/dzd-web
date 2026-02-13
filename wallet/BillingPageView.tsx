@@ -10,6 +10,15 @@ import { useNavigate } from 'react-router-dom';
 const WORKER_URL = "https://dzd-billing-api.sitewasd2026.workers.dev";
 
 export default function BillingPageView({ user }: any) {
+  const navigate = useNavigate();
+  
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
+
   const [amount, setAmount] = useState('');
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -25,6 +34,8 @@ export default function BillingPageView({ user }: any) {
   });
   const [showHeader, setShowHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+
+  // ... rest of your code
 
   // Handle scroll to hide/show header (same as Services/Orders)
   useEffect(() => {
