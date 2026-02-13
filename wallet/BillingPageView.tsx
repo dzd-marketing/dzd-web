@@ -253,6 +253,53 @@ export default function BillingPageView({ user }: any) {
         </div>
       )}
 
+      {/* Main Header - Same as Services/Orders */}
+<div 
+  className={`-mx-4 md:-mx-8 lg:-mx-12 px-4 md:px-8 lg:px-12 pt-6 md:pt-8 pb-6 bg-[#fcfdfe] dark:bg-[#020617] border-b border-slate-200 dark:border-white/5 shadow-sm transition-all duration-300 ${
+    showHeader ? 'translate-y-0 opacity-100 relative' : '-translate-y-full opacity-0 pointer-events-none absolute'
+  }`}
+>
+  <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
+    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div>
+        <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter leading-none flex items-center gap-3">
+          <WalletIcon className="text-blue-600" size={32} />
+          Financial Core
+        </h1>
+        <p className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-[0.3em] text-[9px] mt-1.5 flex items-center gap-2">
+          <Activity size={10} className="text-blue-500 animate-pulse" />
+          Balance & Transaction Hub
+        </p>
+      </div>
+      
+      <div className="flex items-center gap-3">
+        <button 
+          onClick={() => setShowHistory(true)}
+          className="hidden md:flex items-center gap-2 px-5 py-3 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 text-slate-500 hover:text-blue-500 transition-all shadow-sm active:scale-95 text-[9px] font-black uppercase tracking-widest"
+        >
+          <History size={14} /> History
+        </button>
+
+        <button className="hidden md:flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20">
+          <MessageSquare size={14} /> Support
+        </button>
+        
+        <button 
+          onClick={() => setShowNotifications(!showNotifications)}
+          className={`relative p-3 rounded-xl transition-all border shrink-0 flex items-center justify-center ${
+            showNotifications ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-white/5 text-slate-500 border-slate-200 dark:border-white/10 hover:border-blue-500'
+          }`}
+        >
+          <Bell size={18} />
+          {notifications.length > 0 && (
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-[#0f172a] animate-pulse"></span>
+          )}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
       {/* Sticky Mini Header - Same as Services/Orders */}
       {!showHeader && (
         <div className="sticky top-0 z-40 -mx-4 md:-mx-8 lg:-mx-12 px-4 md:px-8 lg:px-12 py-3 bg-[#fcfdfe]/95 dark:bg-[#020617]/95 backdrop-blur-2xl border-b border-slate-200 dark:border-white/5 shadow-sm transition-all duration-300">
