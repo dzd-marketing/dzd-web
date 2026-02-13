@@ -11,6 +11,7 @@ import SignupPage from './SignupPage';
 import DashboardPage from './DashboardPage';
 import OnboardingPage from './OnboardingPage';
 import ForgotPasswordPage from './ForgotPasswordPage';
+import SupportPage from './Support';
 
 export default function App() {
   const [theme, setTheme] = useState('dark');
@@ -105,6 +106,7 @@ export default function App() {
             <Route path="/onboarding" element={<OnboardingPage user={user} onComplete={handleOnboardingComplete} />} />
             <Route path="/dashboard" element={<DashboardPage user={user} />} />
             <Route path="/forgot" element={<ForgotPasswordPage />} />
+            <Route path="/support" element={<SupportPage />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </main>
