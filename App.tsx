@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'; // 👈 Add useLocation
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
@@ -15,6 +15,21 @@ import HowToUseView from './HowToUseView';
 import ArticleView from './ArticleView';
 import CategoryView from './CategoryView';
 import WalletPage from './wallet/BillingPageView';
+
+// 👇 Add ScrollToTop component here
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'instant' // Use 'smooth' for animated scrolling
+    });
+  }, [pathname]);
+
+  return null;
+}
 
 export default function App() {
   const [theme, setTheme] = useState('dark');
@@ -93,6 +108,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <ScrollToTop /> {/* 👈 Add it here */}
       <div className={`min-h-screen transition-colors duration-200 ${theme === 'dark' ? 'dark bg-dark' : 'bg-slate-50'}`}>
         <Navbar 
           theme={theme} 
