@@ -133,7 +133,7 @@ const scrollToTop = () => {
 
     const handleAddToOrder = (service: any) => {
     // Navigate to orders page with service data in state
-    navigate('/dashboard', { 
+    navigate('/dashboard/orders', { 
       state: { 
         selectedService: {
           id: service.service.toString(),
