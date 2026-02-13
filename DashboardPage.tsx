@@ -134,27 +134,30 @@ export default function DashboardPage({ user }: any) {
 
         {/* Desktop Sidebar Footer */}
         <div className="p-4 border-t border-slate-100 dark:border-white/5">
-           <div className={`bg-blue-600/5 dark:bg-blue-600/10 rounded-[1.5rem] p-5 transition-all overflow-hidden ${sidebarOpen ? 'block' : 'hidden'}`}>
-             <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-1.5 flex items-center gap-2">
-               <Activity size={10} className={loadingBalance ? 'animate-pulse' : ''} /> Matrix: Online
-             </p>
-             <div className="flex justify-between items-center">
+          <div className={`transition-all duration-300 overflow-hidden ${sidebarOpen ? 'block' : 'hidden'}`}>
+            <div className="bg-gradient-to-br from-blue-600/5 to-blue-600/10 rounded-xl p-4 border border-blue-600/10">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Balance</p>
-                  <p className="text-xl font-black text-slate-900 dark:text-white leading-tight">${balance || '0.00'}</p>
+                  <p className="text-[8px] font-black text-blue-500 uppercase tracking-widest mb-1 flex items-center gap-1">
+                    <Activity size={8} className={loadingBalance ? 'animate-pulse' : ''} />
+                    Balance
+                  </p>
+                  <p className="text-lg font-black text-slate-900 dark:text-white">${balance || '0.00'}</p>
                 </div>
-                <button className="bg-blue-600 p-2.5 rounded-xl text-white shadow-lg hover:scale-110 transition-transform">
-                  <PlusCircle size={18} />
-                </button>
-             </div>
-           </div>
-           {!sidebarOpen && (
-              <div className="flex justify-center py-4 text-blue-500">
-                <div className="w-10 h-10 rounded-xl bg-blue-600/10 flex items-center justify-center">
-                  <Zap size={20} fill="currentColor" />
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
+                  <Zap size={14} fill="currentColor" />
                 </div>
               </div>
-           )}
+            </div>
+          </div>
+          
+          {!sidebarOpen && (
+            <div className="flex justify-center py-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-600">
+                <Zap size={18} fill="currentColor" />
+              </div>
+            </div>
+          )}
         </div>
       </aside>
 
