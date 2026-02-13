@@ -107,7 +107,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<LandingPage onSignupClick={openSignup} />} />
             <Route path="/onboarding" element={<OnboardingPage user={user} onComplete={handleOnboardingComplete} />} />
-            <Route path="/dashboard" element={<DashboardPage user={user} />} />
+            <Route path="/dashboard/*" element={<DashboardPage user={user} />} />
             <Route path="/forgot" element={<ForgotPasswordPage />} />
             <Route path="/support" element={<SupportView />} />
             <Route path="/support/how-to-use" element={<HowToUseView />} />
