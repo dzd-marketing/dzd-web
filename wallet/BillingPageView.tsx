@@ -10,6 +10,9 @@ import { useNavigate } from 'react-router-dom';
 const WORKER_URL = "https://dzd-billing-api.sitewasd2026.workers.dev";
 
 export default function BillingPageView({ user }: any) {
+    if (!user) {
+    return <Navigate to="/" />; // Redirect to home if not logged in
+  }
   const navigate = useNavigate();
 
   const [amount, setAmount] = useState('');
