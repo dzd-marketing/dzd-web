@@ -44,7 +44,7 @@ export default function LoginPage({ onLogin, onClose, onSwitchToSignup }: { onLo
         ...(userDoc.exists() ? userDoc.data() : { name: email.split('@')[0] }) 
       });
     } catch (err: any) {
-      setError(err.message.includes('auth/invalid-credential') ? 'Identity verification failed. Please check credentials.' : err.message);
+      setError(err.message.includes('auth/invalid-credential') ? 'Invalid email address or password. please check and try again!' : err.message);
       setLoading(false);
     }
   };
