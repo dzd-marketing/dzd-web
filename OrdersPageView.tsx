@@ -119,9 +119,12 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
   // AUTH STATE LISTENER
   // ============================================
 
-  useEffect(() => {
+useEffect(() => {
   const state = location.state as any;
   if (state?.selectedService) {
+    // Switch to new order tab FIRST
+    setActiveView('new');
+    
     const { id, name, rate, min, max } = state.selectedService;
     
     // Set the selected service
