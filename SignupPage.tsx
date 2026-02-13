@@ -15,6 +15,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithPopup,
   GoogleAuthProvider,
+  signOut  // 👈 Add this import
 } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
@@ -46,15 +47,30 @@ export default function SignupPage({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
-  // ✅ FORM SUBMIT - Redirect to Login Page
-  const handleAuthSuccess = () => {
-    setSuccess(true);
-    setTimeout(() => {
-      onClose(); // Close signup modal
-      onSwitchToLogin(); // Switch to login modal
-      setSuccess(false);
-      setLoading(false);
-    }, 2000);
+  // ✅ FORM SUBMIT - Signup then LOGOUT, then redirect to Login
+  const handleAuthSuccess = async () => {
+    try {
+      // Sign out the user immediately after successful signup
+      await signOut(auth);
+      
+      setSuccess(true);
+      setTimeout(() => {
+        onClose(); // Close signup modal
+        onSwitchToLogin(); // Switch to login modal
+        setSuccess(false);
+        setLoading(false);
+      }, 2000);
+    } catch (error) {
+      console.error("Error signing out:", error);
+      // Still proceed even if signout fails
+      setSuccess(true);
+      setTimeout(() => {
+        onClose();
+        onSwitchToLogin();
+        setSuccess(false);
+        setLoading(false);
+      }, 2000);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,14 +94,17 @@ export default function SignupPage({
         createdAt: new Date().toISOString() 
       };
       await setDoc(doc(db, 'users', userCredential.user.uid), userData);
-      handleAuthSuccess(); // ✅ Shows success then opens login modal
+      
+      // 👈 This will sign out and then show success message
+      await handleAuthSuccess(); 
+      
     } catch (error: any) {
       alert(error.message);
       setLoading(false);
     }
   };
 
-  // ✅ GOOGLE SIGNUP - Redirect to Dashboard
+  // ✅ GOOGLE SIGNUP - Keep logged in and redirect to Dashboard
   const handleGoogleSignup = async () => {
     setLoading(true);
     const provider = new GoogleAuthProvider();
@@ -100,7 +119,7 @@ export default function SignupPage({
       };
       await setDoc(doc(db, 'users', result.user.uid), userData, { merge: true });
       
-      // ✅ Close modal and redirect to dashboard
+      // ✅ Close modal and redirect to dashboard (stay logged in)
       onClose();
       navigate('/dashboard');
       
@@ -111,6 +130,7 @@ export default function SignupPage({
   };
 
   return (
+    // ... rest of your JSX remains exactly the same ...
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-hidden">
       {/* Background Overlay Click to Close */}
       <div className="fixed inset-0 cursor-pointer" onClick={onClose} />
