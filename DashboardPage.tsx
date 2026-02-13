@@ -180,7 +180,7 @@ export default function DashboardPage({ user }: any) {
       <Tickets scrollContainerRef={mainRef} />
     )}
 
-    {activeTab === 'wallet' && (
+    {activeTab === 'tickets' && (
       <Tickets scrollContainerRef={mainRef} />
     )}
     
