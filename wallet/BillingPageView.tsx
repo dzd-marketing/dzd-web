@@ -6,15 +6,18 @@ import {
   Activity
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { auth } from './firebase'; // Import Firebase auth
 
 const WORKER_URL = "https://dzd-billing-api.sitewasd2026.workers.dev";
 
-export default function BillingPageView({ user }: any) {
-    if (!user) {
-    return <Navigate to="/" />; // Redirect to home if not logged in
-  }
+export default function BillingPageView({ user: propUser }: any) {
   const navigate = useNavigate();
-
+  
+  // State for user data
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [loadingUser, setLoadingUser] = useState(true);
+  
+  // Form states
   const [amount, setAmount] = useState('');
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -31,9 +34,52 @@ export default function BillingPageView({ user }: any) {
   const [showHeader, setShowHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
-  // ... rest of your code
+  // Listen to auth state
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+      if (firebaseUser) {
+        // Create user object with all needed fields
+        setCurrentUser({
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName,
+          // Add any other fields you need
+        });
+      } else {
+        setCurrentUser(null);
+        // Redirect to home if not logged in
+        navigate('/');
+      }
+      setLoadingUser(false);
+    });
 
-  // Handle scroll to hide/show header (same as Services/Orders)
+    return () => unsubscribe();
+  }, [navigate]);
+
+  // Update from prop if provided (backup)
+  useEffect(() => {
+    if (propUser && !currentUser) {
+      setCurrentUser(propUser);
+    }
+  }, [propUser]);
+
+  // Load cleared notifications from localStorage if user exists
+  useEffect(() => {
+    if (currentUser?.uid) {
+      const saved = localStorage.getItem(`cleared_notifs_${currentUser?.uid}`);
+      if (saved) setClearedNotifications(JSON.parse(saved));
+    }
+  }, [currentUser]);
+
+  // Fetch balance and history if user exists
+  useEffect(() => {
+    if (currentUser?.uid) {
+      fetchBalance(currentUser.uid);
+      fetchHistory(currentUser.uid);
+    }
+  }, [currentUser, clearedNotifications]);
+
+  // Handle scroll to hide/show header
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
@@ -53,22 +99,6 @@ export default function BillingPageView({ user }: any) {
       window.removeEventListener('scroll', handleScroll);
     };
   }, [lastScrollY]);
-
-  // Load cleared notifications from localStorage if user exists
-  useEffect(() => {
-    if (user?.uid) {
-      const saved = localStorage.getItem(`cleared_notifs_${user?.uid}`);
-      if (saved) setClearedNotifications(JSON.parse(saved));
-    }
-  }, [user]);
-
-  // Fetch balance and history if user exists
-  useEffect(() => {
-    if (user?.uid) {
-      fetchBalance(user.uid);
-      fetchHistory(user.uid);
-    }
-  }, [user, clearedNotifications]);
 
   const showNotification = (msg: string, type: 'success' | 'error') => {
     setToast({ show: true, msg, type });
@@ -107,23 +137,24 @@ export default function BillingPageView({ user }: any) {
   };
 
   const clearAll = () => {
-    if (!user?.uid) return;
+    if (!currentUser?.uid) return;
     const allIds = notifications.map(n => n.id || n.created_at);
     const newClearedList = [...clearedNotifications, ...allIds];
     setClearedNotifications(newClearedList);
-    localStorage.setItem(`cleared_notifs_${user?.uid}`, JSON.stringify(newClearedList));
+    localStorage.setItem(`cleared_notifs_${currentUser?.uid}`, JSON.stringify(newClearedList));
     setNotifications([]);
     setShowNotifications(false);
   };
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedFile || !user) return showNotification("Please select a receipt.", "error");
+    if (!selectedFile || !currentUser) return showNotification("Please select a receipt.", "error");
+    
     setUploading(true);
     const formData = new FormData();
-    formData.append("userId", user.uid);
-    formData.append("email", user.email || "no-email");
-    formData.append("username", user.username || user.displayName || "Unknown"); 
+    formData.append("userId", currentUser.uid);
+    formData.append("email", currentUser.email || "no-email");
+    formData.append("username", currentUser.displayName || currentUser.email?.split('@')[0] || "Unknown"); 
     formData.append("amount", amount);
     formData.append("receipt", selectedFile);
 
@@ -131,9 +162,10 @@ export default function BillingPageView({ user }: any) {
       const response = await fetch(`${WORKER_URL}/submit-deposit`, { method: "POST", body: formData });
       if (response.ok) {
         showNotification("Deposit submitted for verification successfully!", "success");
-        setAmount(''); setSelectedFile(null); 
-        fetchBalance(user.uid);
-        fetchHistory(user.uid);
+        setAmount(''); 
+        setSelectedFile(null); 
+        fetchBalance(currentUser.uid);
+        fetchHistory(currentUser.uid);
       } else {
         showNotification("Submission failed. Please try again.", "error");
       }
@@ -141,6 +173,37 @@ export default function BillingPageView({ user }: any) {
       showNotification("A network error occurred!", "error");
     } finally { setUploading(false); }
   };
+
+  // Show loading state while checking auth
+  if (loadingUser) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">LOADING USER DATA...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If no user after loading, show login prompt
+  if (!currentUser) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center bg-white dark:bg-[#0f172a]/40 rounded-[2.5rem] p-12 border border-slate-200 dark:border-white/5 max-w-md">
+          <ShieldCheck size={48} className="mx-auto text-blue-500 mb-4" />
+          <h2 className="text-xl font-black text-slate-900 dark:text-white mb-2">Authentication Required</h2>
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-6">Please sign in to access your wallet</p>
+          <button 
+            onClick={() => navigate('/')}
+            className="px-8 py-4 bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all"
+          >
+            Return to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative animate-fade-in pb-32">
