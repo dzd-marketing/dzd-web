@@ -123,6 +123,10 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
 useEffect(() => {
   const state = location.state as any;
   if (state?.selectedService) {
+        window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
     // Show loading state
     setNavigationLoading(true);
     
