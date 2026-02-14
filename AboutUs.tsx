@@ -159,7 +159,7 @@ const TimelineItem = ({ year, title, description, isLast }: { year: string; titl
   </div>
 );
 
-export default function AboutPage() {
+export default function AboutPage({ onSignupClick }: { onSignupClick?: () => void }) {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
 
@@ -183,7 +183,7 @@ const handleViewServices = () => {
   if (user) {
     navigate('/dashboard/services');
   } else {
-    navigate('/services'); 
+    onSignupClick?.();
   }
 };
 
