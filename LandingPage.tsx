@@ -793,7 +793,9 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
                 >
                   Create Free Account <ArrowRight size={14} className="lg:w-4 lg:h-4" />
                 </button>
-                <button className="bg-white/10 backdrop-blur-md text-white px-6 lg:px-8 py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black text-xs lg:text-sm border border-white/20 hover:bg-white/20 transition-all flex items-center justify-center gap-2 lg:gap-3">
+                <button 
+                  onClick={() => navigate('/contact')}
+                  className="bg-white/10 backdrop-blur-md text-white px-6 lg:px-8 py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black text-xs lg:text-sm border border-white/20 hover:bg-white/20 transition-all flex items-center justify-center gap-2 lg:gap-3">
                   <HeadphonesIcon size={14} className="lg:w-4 lg:h-4" /> Contact Sales
                 </button>
               </div>
