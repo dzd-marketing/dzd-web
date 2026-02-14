@@ -171,6 +171,22 @@ export default function AboutPage() {
     return () => unsubscribe();
   }, []);
 
+const handleCreateAccount = () => {
+  if (user) {
+    navigate('/dashboard/home');
+  } else {
+    onSignupClick?.();
+  }
+};
+
+const handleViewServices = () => {
+  if (user) {
+    navigate('/dashboard/services');
+  } else {
+    navigate('/services'); 
+  }
+};
+
   // Stats data
   const stats = [
     { number: '50K+', label: 'Happy Customers', icon: Users },
@@ -499,18 +515,19 @@ export default function AboutPage() {
             Join 50,000+ satisfied customers who trust us for their social media growth.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button 
-              onClick={() => navigate('/signup')}
-              className="bg-white text-blue-600 px-8 py-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-xl hover:-translate-y-1 active:scale-95 transition-all"
-            >
-              Get Started Today
-            </button>
-            <button 
-              onClick={() => navigate('/services')}
-              className="border-2 border-white text-white px-8 py-4 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-white/10 transition-all"
-            >
-              View Services
-            </button>
+<button 
+  onClick={handleCreateAccount}
+  className="bg-white text-blue-600 px-8 py-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-xl hover:-translate-y-1 active:scale-95 transition-all"
+>
+  Get Started Today
+</button>
+
+<button 
+  onClick={handleViewServices}
+  className="border-2 border-white text-white px-8 py-4 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-white/10 transition-all"
+>
+  View Services
+</button>
           </div>
         </div>
       </section>
