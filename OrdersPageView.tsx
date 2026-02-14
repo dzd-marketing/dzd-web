@@ -190,6 +190,7 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
       const WORKER_URL = "https://dzd-billing-api.sitewasd2026.workers.dev";
       const response = await fetch(`${WORKER_URL}/get-balance?userId=${uid}`);
       const data = await response.json();
+      console.log("🔍 RAW BALANCE DATA FROM WORKER:", data);
       setUserBalance({
         total_balance: parseFloat(data.total_balance || 0).toFixed(2),
         pending_balance: parseFloat(data.pending_balance || 0).toFixed(2)
@@ -361,6 +362,15 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
       );
       
       const balance = parseFloat(userBalance.total_balance);
+          console.log("🔍 BALANCE CHECK:", {
+      serviceName: serviceDetails.name,
+      quantity: quantity,
+      totalPriceLKR: totalPrice.lkr,
+      balanceFromState: userBalance.total_balance,
+      balanceAsNumber: balance,
+      isInsufficient: totalPrice.lkr > balance,
+      comparison: `${totalPrice.lkr} > ${balance} = ${totalPrice.lkr > balance}`
+    });
       setInsufficientBalance(totalPrice.lkr > balance);
     }
   }, [serviceDetails, quantity, userBalance, usdRate, currentUser]);
@@ -544,6 +554,13 @@ const placeOrder = async (e: React.FormEvent) => {
 
   // Check if user has sufficient balance
   if (priceWithProfit.lkr > parseFloat(userBalance.total_balance)) {
+      console.log("🔴 INSUFFICIENT BALANCE ERROR:", {
+    needed: priceWithProfit.lkr,
+    available: userBalance.total_balance,
+    neededType: typeof priceWithProfit.lkr,
+    availableType: typeof parseFloat(userBalance.total_balance),
+    comparison: `${priceWithProfit.lkr} > ${parseFloat(userBalance.total_balance)}`
+  });
     setOrderError(`Insufficient balance. You need LKR ${priceWithProfit.lkr.toFixed(2)} but have LKR ${userBalance.total_balance}`);
     return;
   }
