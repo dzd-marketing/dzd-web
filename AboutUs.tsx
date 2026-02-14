@@ -158,7 +158,6 @@ const TimelineItem = ({ year, title, description, isLast }: { year: string; titl
     </div>
   </div>
 );
-
 export default function AboutPage({ onSignupClick }: { onSignupClick?: () => void }) {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
@@ -171,21 +170,21 @@ export default function AboutPage({ onSignupClick }: { onSignupClick?: () => voi
     return () => unsubscribe();
   }, []);
 
-const handleCreateAccount = () => {
-  if (user) {
-    navigate('/dashboard');
-  } else {
-    onSignupClick?.();
-  }
-};
+  const handleCreateAccount = () => {
+    if (user) {
+      navigate('/dashboard');
+    } else {
+      onSignupClick?.();
+    }
+  };
 
-const handleViewServices = () => {
-  if (user) {
-    navigate('/dashboard');
-  } else {
-    onSignupClick?.();
-  }
-};
+  const handleViewServices = () => {
+    if (user) {
+      navigate('/dashboard/services');
+    } else {
+      onSignupClick?.();
+    }
+  };
 
   // Stats data
   const stats = [
