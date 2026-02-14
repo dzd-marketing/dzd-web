@@ -88,42 +88,35 @@ const TeamMember = ({ name, role, image, social }: { name: string; role: string;
         </p>
         
         {/* Social links - redesigned */}
-        <div className="flex items-center justify-center gap-3 pt-2 border-t border-slate-100 dark:border-white/5">
-          {social?.linkedin && (
-            <a 
-              href={social.linkedin} 
-              className="w-9 h-9 rounded-xl bg-[#0077b5]/10 flex items-center justify-center text-[#0077b5] hover:bg-[#0077b5] hover:text-white transition-all group/btn"
-              title="LinkedIn"
-            >
-              <LinkedinIcon size={16} />
-            </a>
-          )}
-          {social?.twitter && (
-            <a 
-              href={social.twitter} 
-              className="w-9 h-9 rounded-xl bg-[#1DA1F2]/10 flex items-center justify-center text-[#1DA1F2] hover:bg-[#1DA1F2] hover:text-white transition-all group/btn"
-              title="Twitter"
-            >
-              <TwitterIcon size={16} />
-            </a>
-          )}
-          {social?.instagram && (
-            <a 
-              href={social.instagram} 
-              className="w-9 h-9 rounded-xl bg-[#E4405F]/10 flex items-center justify-center text-[#E4405F] hover:bg-gradient-to-r hover:from-[#833AB4] hover:via-[#FD1D1D] hover:to-[#FCAF45] hover:text-white transition-all group/btn"
-              title="Instagram"
-            >
-              <InstagramIcon size={16} />
-            </a>
-          )}
+      <div className="flex items-center justify-center gap-2 mt-3">
+        {social?.linkedin && (
           <a 
-            href={`mailto:${name.toLowerCase().replace(' ', '.')}@dzdmarketing.com`} 
-            className="w-9 h-9 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-600 hover:bg-blue-600 hover:text-white transition-all group/btn"
-            title="Email"
+            href={social.linkedin} 
+            className="w-9 h-9 rounded-xl bg-white/80 dark:bg-white/10 backdrop-blur-sm shadow-sm flex items-center justify-center text-[#0077b5] hover:bg-[#0077b5] hover:text-white transition-all border border-white/20"
+            title="LinkedIn"
           >
-            <Mail size={16} />
+            <LinkedinIcon size={15} />
           </a>
-        </div>
+        )}
+        {social?.twitter && (
+          <a 
+            href={social.twitter} 
+            className="w-9 h-9 rounded-xl bg-white/80 dark:bg-white/10 backdrop-blur-sm shadow-sm flex items-center justify-center text-[#1DA1F2] hover:bg-[#1DA1F2] hover:text-white transition-all border border-white/20"
+            title="Twitter"
+          >
+            <TwitterIcon size={15} />
+          </a>
+        )}
+        {social?.instagram && (
+          <a 
+            href={social.instagram} 
+            className="w-9 h-9 rounded-xl bg-white/80 dark:bg-white/10 backdrop-blur-sm shadow-sm flex items-center justify-center text-[#E4405F] hover:bg-gradient-to-r hover:from-[#833AB4] hover:via-[#FD1D1D] hover:to-[#FCAF45] hover:text-white transition-all border border-white/20"
+            title="Instagram"
+          >
+            <InstagramIcon size={15} />
+          </a>
+        )}
+      </div>
       </div>
     </div>
   </div>
