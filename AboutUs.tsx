@@ -173,7 +173,7 @@ export default function AboutPage({ onSignupClick }: { onSignupClick?: () => voi
 
 const handleCreateAccount = () => {
   if (user) {
-    navigate('/dashboard/home');
+    navigate('/dashboard');
   } else {
     onSignupClick?.();
   }
@@ -181,7 +181,7 @@ const handleCreateAccount = () => {
 
 const handleViewServices = () => {
   if (user) {
-    navigate('/dashboard/services');
+    navigate('/dashboard');
   } else {
     onSignupClick?.();
   }
