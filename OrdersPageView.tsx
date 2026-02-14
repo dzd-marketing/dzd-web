@@ -20,17 +20,23 @@ import {
   DollarSign,
   Hash,
   Send,
-  Copy
+  Copy,
+  Wallet
 } from 'lucide-react';
 import { fetchSmmApi } from './DashboardPage';
 import { auth, db } from './firebase';
 import { 
   saveOrderToFirestore, 
   getUserOrders, 
-  updateOrderStatus 
+  updateOrderStatus,
+  deductFromWallet 
 } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { useLocation, useNavigate } from 'react-router-dom'; // Add useNavigate
+import { useLocation, useNavigate } from 'react-router-dom';
+
+// Exchange rate API
+const EXCHANGE_API = "https://v6.exchangerate-api.com/v6/be291495375008a1e603a49a/latest/USD";
+const SIX_HOURS_IN_MS = 6 * 60 * 60 * 1000;
 
 // Order status badge component
 const getOrderStatusBadge = (status: string) => {
@@ -69,9 +75,40 @@ const formatDate = (dateString: string) => {
   }).format(date);
 };
 
+// LKR to USD conversion helper
+const convertLkrToUsd = (lkrAmount: number, rate: number): number => {
+  return lkrAmount / rate;
+};
+
+// USD to LKR conversion helper
+const convertUsdToLkr = (usdAmount: number, rate: number): number => {
+  return usdAmount * rate;
+};
+
+// Calculate price with 50 LKR profit
+const calculatePriceWithProfit = (usdRate: number, quantity: number, serviceRate: number): { usd: number, lkr: number } => {
+  // Calculate base price in USD (rate per 1000)
+  const baseUsdPrice = (quantity / 1000) * serviceRate;
+  
+  // Convert to LKR
+  const baseLkrPrice = convertUsdToLkr(baseUsdPrice, usdRate);
+  
+  // Add 50 LKR profit
+  const lkrWithProfit = baseLkrPrice + 50;
+  
+  // Convert back to USD for display
+  const usdWithProfit = convertLkrToUsd(lkrWithProfit, usdRate);
+  
+  return {
+    usd: usdWithProfit,
+    lkr: lkrWithProfit
+  };
+};
+
 export default function OrdersPageView({ scrollContainerRef }: any) {
   const location = useLocation();
   const navigate = useNavigate();
+  
   // Refs
   const dropdownRef = useRef(null);
   const dateDropdownRef = useRef(null);
@@ -112,59 +149,96 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
   const [orderError, setOrderError] = useState('');
   const [serviceSearch, setServiceSearch] = useState('');
   const [showServiceDropdown, setShowServiceDropdown] = useState(false);
-  const [navigationLoading, setNavigationLoading] = useState(false); 
+  const [navigationLoading, setNavigationLoading] = useState(false);
+  
+  // Wallet Balance State
+  const [userBalance, setUserBalance] = useState({ total_balance: "0.00", pending_balance: "0.00" });
+  const [insufficientBalance, setInsufficientBalance] = useState(false);
+  
+  // USD Rate State
+  const [usdRate, setUsdRate] = useState(310); // Default rate
 
   const PAGE_SIZE = 30;
 
   // ============================================
+  // FETCH USD EXCHANGE RATE (Every 6 Hours)
+  // ============================================
+  useEffect(() => {
+    const fetchUsdRate = async () => {
+      try {
+        const res = await fetch(EXCHANGE_API);
+        const data = await res.json();
+        if (data.result === "success") {
+          setUsdRate(data.conversion_rates.LKR);
+          console.log(`Rate Updated: 1 USD = ${data.conversion_rates.LKR} LKR`);
+        }
+      } catch (err) {
+        console.error("Exchange API failed, using default 310", err);
+      }
+    };
+
+    fetchUsdRate();
+    const interval = setInterval(fetchUsdRate, SIX_HOURS_IN_MS);
+    return () => clearInterval(interval);
+  }, []);
+
+  // ============================================
+  // FETCH USER BALANCE
+  // ============================================
+  const fetchUserBalance = async (uid: string) => {
+    try {
+      const WORKER_URL = "https://dzd-billing-api.sitewasd2026.workers.dev";
+      const response = await fetch(`${WORKER_URL}/get-balance?userId=${uid}`);
+      const data = await response.json();
+      setUserBalance({
+        total_balance: parseFloat(data.total_balance || 0).toFixed(2),
+        pending_balance: parseFloat(data.pending_balance || 0).toFixed(2)
+      });
+    } catch (error) { 
+      console.error("Balance fetch error:", error); 
+    }
+  };
+
+  // ============================================
   // AUTH STATE LISTENER
   // ============================================
-
-useEffect(() => {
-  const state = location.state as any;
-  if (state?.selectedService) {
-        window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-    // Show loading state
-    setNavigationLoading(true);
-    
-    // Switch to new order tab
-    setActiveView('new');
-    
-    const { id, name, rate, min, max } = state.selectedService;
-    
-    // Set the selected service
-    setSelectedService(name);
-    setSelectedServiceId(id);
-    
-    // Simulate a small delay to show loading (remove in production if not needed)
-    setTimeout(() => {
-      setServiceDetails({
-        service: parseInt(id),
-        name: name,
-        rate: rate,
-        min: min,
-        max: max
+  useEffect(() => {
+    const state = location.state as any;
+    if (state?.selectedService) {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
       });
+      setNavigationLoading(true);
+      setActiveView('new');
       
-      // Auto-set quantity to minimum
-      setQuantity(min.toString());
+      const { id, name, rate, min, max } = state.selectedService;
       
-      // Hide loading state
-      setNavigationLoading(false);
-    }, 500); // Small delay to show loading state
-    
-    // Clear the state so it doesn't persist on refresh
-    navigate(location.pathname, { replace: true, state: {} });
-  }
-}, [location.state, navigate]);
+      setSelectedService(name);
+      setSelectedServiceId(id);
+      
+      setTimeout(() => {
+        setServiceDetails({
+          service: parseInt(id),
+          name: name,
+          rate: rate,
+          min: min,
+          max: max
+        });
+        setQuantity(min.toString());
+        setNavigationLoading(false);
+      }, 500);
+      
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, navigate]);
   
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
-      if (!user) {
+      if (user) {
+        fetchUserBalance(user.uid);
+      } else {
         setOrders([]);
       }
     });
@@ -201,7 +275,6 @@ useEffect(() => {
     setError('');
     
     try {
-      // Get orders from Firestore for this specific user
       const userOrders = await getUserOrders(currentUser.uid);
       setOrders(userOrders);
     } catch (err) {
@@ -224,16 +297,13 @@ useEffect(() => {
       const updatedOrders = await Promise.all(
         orders.map(async (order) => {
           try {
-            // Get live status from SMM API
             const statusData = await fetchSmmApi({
               action: 'status',
-              order: order.orderId // Use the real order ID from SMM API
+              order: order.orderId
             });
             
-            // Update Firestore with latest status
             await updateOrderStatus(order.id, statusData);
             
-            // Return updated order
             return {
               ...order,
               status: statusData.status,
@@ -244,7 +314,7 @@ useEffect(() => {
             };
           } catch (err) {
             console.error(`Failed to update order ${order.orderId}:`, err);
-            return order; // Keep existing data
+            return order;
           }
         })
       );
@@ -264,25 +334,36 @@ useEffect(() => {
     loadServices();
   }, []);
 
-  // Load orders when user logs in or view changes to orders
   useEffect(() => {
     if (currentUser && activeView === 'orders') {
       loadUserOrders();
     }
   }, [currentUser, activeView]);
 
-  // Auto-refresh statuses every 30 seconds when on orders view
   useEffect(() => {
     if (!currentUser || activeView !== 'orders' || !orders.length) return;
     
-    // Initial refresh
     refreshOrderStatuses();
-    
-    // Set up interval
     const interval = setInterval(refreshOrderStatuses, 30000);
     
     return () => clearInterval(interval);
   }, [currentUser, activeView, orders.length]);
+
+  // ============================================
+  // CHECK BALANCE WHEN QUANTITY OR SERVICE CHANGES
+  // ============================================
+  useEffect(() => {
+    if (serviceDetails && quantity && currentUser) {
+      const totalPrice = calculatePriceWithProfit(
+        usdRate,
+        parseInt(quantity) || 0,
+        parseFloat(serviceDetails.rate)
+      );
+      
+      const balance = parseFloat(userBalance.total_balance);
+      setInsufficientBalance(totalPrice.lkr > balance);
+    }
+  }, [serviceDetails, quantity, userBalance, usdRate, currentUser]);
 
   // ============================================
   // SCROLL HANDLERS
@@ -346,19 +427,16 @@ useEffect(() => {
   // Filter orders based on search, status, and date
   const filteredOrders = useMemo(() => {
     return orders.filter(order => {
-      // Search filter
       const matchesSearch = 
         order.orderId?.toString().includes(searchTerm) || 
         order.serviceId?.toString().includes(searchTerm) ||
         (order.link && order.link.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (order.serviceName && order.serviceName.toLowerCase().includes(searchTerm.toLowerCase()));
       
-      // Status filter
       const matchesStatus = activeStatus === 'All' || 
         order.status?.toLowerCase() === activeStatus.toLowerCase() ||
         order.status?.toLowerCase().includes(activeStatus.toLowerCase());
       
-      // Date filter
       let matchesDate = true;
       if (dateRange !== 'All time' && order.date) {
         const orderDate = new Date(order.date);
@@ -386,7 +464,6 @@ useEffect(() => {
       
       return matchesSearch && matchesStatus && matchesDate;
     }).sort((a, b) => {
-      // Sort by date, newest first
       const dateA = a.date ? new Date(a.date).getTime() : 0;
       const dateB = b.date ? new Date(b.date).getTime() : 0;
       return dateB - dateA;
@@ -407,7 +484,7 @@ useEffect(() => {
   }, [services, serviceSearch]);
 
   // ============================================
-  // ORDER STATS
+  // ORDER STATS (with profit included in charges)
   // ============================================
   const orderStats = useMemo(() => {
     const total = filteredOrders.length;
@@ -422,16 +499,27 @@ useEffect(() => {
       o.status?.toLowerCase().includes('processing') || 
       o.status?.toLowerCase().includes('progress')
     ).length;
-    const totalSpent = filteredOrders.reduce((sum, order) => {
+    
+    // Calculate total spent including profit
+    const totalSpentLkr = filteredOrders.reduce((sum, order) => {
       const charge = parseFloat(order.charge || 0);
       return sum + (isNaN(charge) ? 0 : charge);
-    }, 0).toFixed(2);
+    }, 0);
     
-    return { total, completed, pending, processing, totalSpent };
-  }, [filteredOrders]);
+    const totalSpentUsd = convertLkrToUsd(totalSpentLkr, usdRate);
+    
+    return { 
+      total, 
+      completed, 
+      pending, 
+      processing, 
+      totalSpentLkr: totalSpentLkr.toFixed(2),
+      totalSpentUsd: totalSpentUsd.toFixed(2)
+    };
+  }, [filteredOrders, usdRate]);
 
   // ============================================
-  // PLACE ORDER - SAVE TO FIRESTORE
+  // PLACE ORDER - WITH WALLET DEDUCTION
   // ============================================
   const placeOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -443,6 +531,19 @@ useEffect(() => {
 
     if (!selectedServiceId || !link || !quantity) {
       setOrderError('Service, link, and quantity are required');
+      return;
+    }
+
+    // Calculate price with profit
+    const priceWithProfit = calculatePriceWithProfit(
+      usdRate,
+      parseInt(quantity) || 0,
+      parseFloat(serviceDetails?.rate || 0)
+    );
+
+    // Check if user has sufficient balance
+    if (priceWithProfit.lkr > parseFloat(userBalance.total_balance)) {
+      setOrderError(`Insufficient balance. You need LKR ${priceWithProfit.lkr.toFixed(2)} but have LKR ${userBalance.total_balance}`);
       return;
     }
 
@@ -459,7 +560,6 @@ useEffect(() => {
         quantity: quantity
       };
 
-      // Add optional parameters
       if (customComments) params.comments = customComments;
       if (usernames) params.usernames = usernames;
 
@@ -467,19 +567,26 @@ useEffect(() => {
       const data = await fetchSmmApi(params);
       
       if (data && data.order) {
-        // 2. Calculate charge
-        const calculatedCharge = serviceDetails 
-          ? ((parseInt(quantity) / 1000) * parseFloat(serviceDetails.rate)).toFixed(2)
-          : '0.00';
+        // 2. Deduct amount from wallet (LKR amount with profit)
+        const deductionSuccess = await deductFromWallet(
+          currentUser.uid, 
+          priceWithProfit.lkr,
+          `Order #${data.order} - ${serviceDetails?.name}`
+        );
 
-        // 3. Save order to Firestore with user ID
+        if (!deductionSuccess) {
+          throw new Error('Failed to deduct from wallet. Order cancelled.');
+        }
+
+        // 3. Save order to Firestore with user ID (store the LKR amount with profit)
         const orderData = {
           orderId: data.order,
           serviceId: selectedServiceId,
           serviceName: serviceDetails?.name || `Service #${selectedServiceId}`,
           link: link,
           quantity: parseInt(quantity),
-          charge: calculatedCharge,
+          charge: priceWithProfit.lkr.toFixed(2), // Store LKR amount with profit
+          chargeUsd: priceWithProfit.usd.toFixed(2), // Store USD equivalent
           status: 'Pending',
           remains: parseInt(quantity),
           date: new Date().toISOString()
@@ -487,13 +594,20 @@ useEffect(() => {
 
         await saveOrderToFirestore(currentUser.uid, orderData);
         
-        // 4. Show success message
+        // 4. Refresh balance
+        await fetchUserBalance(currentUser.uid);
+        
+        // 5. Show success message
         setOrderSuccess({
           order: data.order,
-          message: 'Order placed successfully!'
+          message: 'Order placed successfully!',
+          price: {
+            lkr: priceWithProfit.lkr.toFixed(2),
+            usd: priceWithProfit.usd.toFixed(2)
+          }
         });
         
-        // 5. Reset form
+        // 6. Reset form
         setSelectedService('');
         setSelectedServiceId('');
         setServiceDetails(null);
@@ -504,10 +618,10 @@ useEffect(() => {
         setServiceSearch('');
         setShowServiceDropdown(false);
         
-        // 6. Reload orders
+        // 7. Reload orders
         await loadUserOrders();
         
-        // 7. Switch to orders view after 2 seconds
+        // 8. Switch to orders view after 2 seconds
         setTimeout(() => {
           setActiveView('orders');
           setOrderSuccess(null);
@@ -549,6 +663,9 @@ useEffect(() => {
   const handleManualRefresh = async () => {
     await loadUserOrders();
     await refreshOrderStatuses();
+    if (currentUser) {
+      await fetchUserBalance(currentUser.uid);
+    }
   };
 
   // ============================================
@@ -583,6 +700,17 @@ useEffect(() => {
             </div>
             
             <div className="flex items-center gap-3">
+              {/* Balance Display - NEW */}
+              {currentUser && (
+                <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-lg shadow-blue-600/20">
+                  <Wallet size={14} />
+                  <div className="flex flex-col">
+                    <span className="text-[7px] font-black uppercase tracking-wider opacity-80">Balance</span>
+                    <span className="text-xs font-black">LKR {userBalance.total_balance}</span>
+                  </div>
+                </div>
+              )}
+
               {/* View toggle buttons */}
               <button
                 onClick={() => {
@@ -631,7 +759,7 @@ useEffect(() => {
             </div>
           </div>
 
-          {/* Stats Cards - Desktop */}
+          {/* Stats Cards - Desktop - UPDATED with LKR/USD */}
           {activeView === 'orders' && currentUser && (
             <div className="hidden md:grid grid-cols-4 gap-4 pt-2">
               <div className="bg-white dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 p-4">
@@ -648,7 +776,10 @@ useEffect(() => {
               </div>
               <div className="bg-blue-500/5 rounded-2xl border border-blue-500/20 p-4">
                 <p className="text-[8px] font-black uppercase text-blue-500 tracking-widest">Total Spent</p>
-                <p className="text-2xl font-black text-blue-500">${orderStats.totalSpent}</p>
+                <div>
+                  <p className="text-2xl font-black text-blue-500">LKR {orderStats.totalSpentLkr}</p>
+                  <p className="text-[8px] font-bold text-blue-400/70">≈ ${orderStats.totalSpentUsd}</p>
+                </div>
               </div>
             </div>
           )}
@@ -686,6 +817,12 @@ useEffect(() => {
                   </button>
                 ))}
               </div>
+
+              {/* Mini Balance - Mobile */}
+              <div className="flex items-center gap-2 bg-blue-600/10 px-3 py-1.5 rounded-lg md:hidden">
+                <Wallet size={12} className="text-blue-600" />
+                <span className="text-[8px] font-black text-blue-600">LKR {userBalance.total_balance}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -700,6 +837,12 @@ useEffect(() => {
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-900 dark:text-white">
                 Deploy New Mission
               </p>
+              {currentUser && (
+                <div className="ml-auto flex items-center gap-1 bg-blue-600/10 px-2 py-1 rounded-lg">
+                  <Wallet size={10} className="text-blue-600" />
+                  <span className="text-[7px] font-black text-blue-600">LKR {userBalance.total_balance}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -881,8 +1024,15 @@ useEffect(() => {
                           <td className="px-6 py-5 font-bold text-slate-900 dark:text-white text-sm">
                             {order.quantity?.toLocaleString()}
                           </td>
-                          <td className="px-6 py-5 font-black text-slate-900 dark:text-white text-sm">
-                            ${parseFloat(order.charge || 0).toFixed(2)}
+                          <td className="px-6 py-5">
+                            <div className="font-black text-slate-900 dark:text-white text-sm">
+                              LKR {parseFloat(order.charge || 0).toFixed(2)}
+                            </div>
+                            {order.chargeUsd && (
+                              <div className="text-[8px] font-bold text-slate-400">
+                                ≈ ${order.chargeUsd}
+                              </div>
+                            )}
                           </td>
                           <td className="px-6 py-5">
                             <span className={`${statusBadge.color} border text-[8px] font-black px-2 py-1 rounded-md flex items-center gap-1 w-fit`}>
@@ -1064,9 +1214,16 @@ useEffect(() => {
                         </div>
                         <div>
                           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Charge</p>
-                          <p className="text-sm font-black text-blue-600">
-                            ${parseFloat(order.charge || 0).toFixed(2)}
-                          </p>
+                          <div>
+                            <p className="text-sm font-black text-blue-600">
+                              LKR {parseFloat(order.charge || 0).toFixed(2)}
+                            </p>
+                            {order.chargeUsd && (
+                              <p className="text-[7px] font-bold text-slate-400">
+                                ≈ ${order.chargeUsd}
+                              </p>
+                            )}
+                          </div>
                         </div>
                         <div>
                           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Date</p>
@@ -1130,7 +1287,7 @@ useEffect(() => {
         ) : (
           /* NEW ORDER FORM VIEW */
           <div className="max-w-3xl mx-auto">
-            {/* Success Message */}
+            {/* Success Message - UPDATED with LKR/USD */}
             {orderSuccess && (
               <div className="mb-6 p-5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -1140,6 +1297,9 @@ useEffect(() => {
                   <div>
                     <p className="text-sm font-black text-emerald-500">Order Placed Successfully!</p>
                     <p className="text-[10px] font-bold text-emerald-600/70">Order ID: #{orderSuccess.order}</p>
+                    <p className="text-[8px] font-bold text-emerald-600/50">
+                      Charged: LKR {orderSuccess.price?.lkr} (${orderSuccess.price?.usd})
+                    </p>
                   </div>
                 </div>
                 <button 
@@ -1162,6 +1322,22 @@ useEffect(() => {
               </div>
             )}
 
+            {/* Insufficient Balance Warning */}
+            {insufficientBalance && serviceDetails && quantity && !orderError && (
+              <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center gap-3">
+                <AlertCircle size={16} className="text-amber-500" />
+                <p className="text-[9px] font-bold text-amber-500">
+                  ⚠️ Insufficient funds. You need LKR {
+                    calculatePriceWithProfit(
+                      usdRate, 
+                      parseInt(quantity) || 0, 
+                      parseFloat(serviceDetails.rate)
+                    ).lkr.toFixed(2)
+                  } but have LKR {userBalance.total_balance}
+                </p>
+              </div>
+            )}
+
             <div className="bg-white dark:bg-[#0f172a]/40 rounded-[2.5rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm">
               <div className="p-6 md:p-8 border-b border-slate-200 dark:border-white/5">
                 <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tighter flex items-center gap-3">
@@ -1174,106 +1350,106 @@ useEffect(() => {
               </div>
 
               <form onSubmit={placeOrder} className="p-6 md:p-8 space-y-6">
-{/* Service Selection */}
-<div className="space-y-2">
-  <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
-    <Hash size={12} />
-    Select Service <span className="text-red-500">*</span>
-  </label>
-  
-  <div className="relative">
-    <button
-      type="button"
-      onClick={() => setShowServiceDropdown(!showServiceDropdown)}
-      disabled={navigationLoading}
-      className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 text-left flex justify-between items-center hover:border-blue-500 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-    >
-      <div>
-        {navigationLoading ? (
-          <div className="flex items-center gap-3">
-            <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <div>
-              <p className="text-sm font-medium text-slate-400">Loading service details...</p>
-              <p className="text-[8px] font-bold text-blue-500/70 mt-0.5">Preparing order form</p>
-            </div>
-          </div>
-        ) : serviceDetails ? (
-          <div>
-            <p className="font-black text-slate-900 dark:text-white text-sm">
-              {serviceDetails.name}
-            </p>
-            <p className="text-[8px] font-bold text-slate-500 mt-0.5">
-              ID: {serviceDetails.service} | Min: {serviceDetails.min?.toLocaleString()} | Max: {serviceDetails.max?.toLocaleString()} | Rate: ${serviceDetails.rate}/1k
-            </p>
-          </div>
-        ) : (
-          <p className="text-sm text-slate-400">Choose a service to deploy</p>
-        )}
-      </div>
-      {!navigationLoading && (
-        <ChevronUp size={16} className={`transform transition-transform ${showServiceDropdown ? 'rotate-180' : ''}`} />
-      )}
-    </button>
+                {/* Service Selection */}
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                    <Hash size={12} />
+                    Select Service <span className="text-red-500">*</span>
+                  </label>
+                  
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowServiceDropdown(!showServiceDropdown)}
+                      disabled={navigationLoading}
+                      className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 text-left flex justify-between items-center hover:border-blue-500 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                    >
+                      <div>
+                        {navigationLoading ? (
+                          <div className="flex items-center gap-3">
+                            <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                            <div>
+                              <p className="text-sm font-medium text-slate-400">Loading service details...</p>
+                              <p className="text-[8px] font-bold text-blue-500/70 mt-0.5">Preparing order form</p>
+                            </div>
+                          </div>
+                        ) : serviceDetails ? (
+                          <div>
+                            <p className="font-black text-slate-900 dark:text-white text-sm">
+                              {serviceDetails.name}
+                            </p>
+                            <p className="text-[8px] font-bold text-slate-500 mt-0.5">
+                              ID: {serviceDetails.service} | Min: {serviceDetails.min?.toLocaleString()} | Max: {serviceDetails.max?.toLocaleString()} | Rate: ${serviceDetails.rate}/1k
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-slate-400">Choose a service to deploy</p>
+                        )}
+                      </div>
+                      {!navigationLoading && (
+                        <ChevronUp size={16} className={`transform transition-transform ${showServiceDropdown ? 'rotate-180' : ''}`} />
+                      )}
+                    </button>
 
-    {showServiceDropdown && !navigationLoading && (
-      <div className="absolute z-50 mt-2 w-full bg-white dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl p-3 max-h-96 overflow-y-auto">
-        <div className="mb-3">
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search services..."
-              value={serviceSearch}
-              onChange={(e) => setServiceSearch(e.target.value)}
-              className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2.5 pl-9 pr-4 text-xs focus:border-blue-600 outline-none"
-              autoFocus
-            />
-          </div>
-        </div>
-        
-        <div className="space-y-1">
-          {loadingServices ? (
-            <div className="py-8 text-center">
-              <Loader2 size={20} className="mx-auto animate-spin text-blue-600" />
-              <p className="text-[9px] font-black uppercase text-slate-400 mt-2">Loading services...</p>
-            </div>
-          ) : filteredServices.length > 0 ? (
-            filteredServices.map(service => (
-              <button
-                key={service.service}
-                type="button"
-                onClick={() => {
-                  setSelectedService(service.name);
-                  setSelectedServiceId(service.service.toString());
-                  setServiceSearch('');
-                  setShowServiceDropdown(false);
-                }}
-                className="w-full text-left px-3 py-3 rounded-lg hover:bg-blue-600/10 transition-all"
-              >
-                <p className="font-bold text-slate-900 dark:text-white text-xs">
-                  {service.name}
-                </p>
-                <div className="flex items-center gap-3 mt-1">
-                  <span className="text-[8px] font-black text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded">
-                    ID: {service.service}
-                  </span>
-                  <span className="text-[8px] font-bold text-slate-500">
-                    ${service.rate}/1k
-                  </span>
-                  <span className="text-[8px] font-bold text-slate-500">
-                    {service.min}-{service.max}
-                  </span>
+                    {showServiceDropdown && !navigationLoading && (
+                      <div className="absolute z-50 mt-2 w-full bg-white dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl p-3 max-h-96 overflow-y-auto">
+                        <div className="mb-3">
+                          <div className="relative">
+                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input
+                              type="text"
+                              placeholder="Search services..."
+                              value={serviceSearch}
+                              onChange={(e) => setServiceSearch(e.target.value)}
+                              className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2.5 pl-9 pr-4 text-xs focus:border-blue-600 outline-none"
+                              autoFocus
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-1">
+                          {loadingServices ? (
+                            <div className="py-8 text-center">
+                              <Loader2 size={20} className="mx-auto animate-spin text-blue-600" />
+                              <p className="text-[9px] font-black uppercase text-slate-400 mt-2">Loading services...</p>
+                            </div>
+                          ) : filteredServices.length > 0 ? (
+                            filteredServices.map(service => (
+                              <button
+                                key={service.service}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedService(service.name);
+                                  setSelectedServiceId(service.service.toString());
+                                  setServiceSearch('');
+                                  setShowServiceDropdown(false);
+                                }}
+                                className="w-full text-left px-3 py-3 rounded-lg hover:bg-blue-600/10 transition-all"
+                              >
+                                <p className="font-bold text-slate-900 dark:text-white text-xs">
+                                  {service.name}
+                                </p>
+                                <div className="flex items-center gap-3 mt-1">
+                                  <span className="text-[8px] font-black text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded">
+                                    ID: {service.service}
+                                  </span>
+                                  <span className="text-[8px] font-bold text-slate-500">
+                                    ${service.rate}/1k
+                                  </span>
+                                  <span className="text-[8px] font-bold text-slate-500">
+                                    {service.min}-{service.max}
+                                  </span>
+                                </div>
+                              </button>
+                            ))
+                          ) : (
+                            <p className="py-4 text-center text-[10px] text-slate-500">No services found</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </button>
-            ))
-          ) : (
-            <p className="py-4 text-center text-[10px] text-slate-500">No services found</p>
-          )}
-        </div>
-      </div>
-    )}
-  </div>
-</div>
 
                 {/* Link/Username Input */}
                 <div className="space-y-2">
@@ -1311,14 +1487,47 @@ useEffect(() => {
                     required
                   />
                   
+                  {/* Price Display with Profit - UPDATED */}
                   {serviceDetails && quantity && (
                     <div className="mt-2 p-3 bg-blue-600/5 rounded-xl border border-blue-600/20">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[9px] font-black uppercase text-slate-500">Total Price:</span>
-                        <span className="text-lg font-black text-blue-600">
-                          ${((parseInt(quantity) / 1000) * parseFloat(serviceDetails.rate)).toFixed(2)}
-                        </span>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-[9px] font-black uppercase text-slate-500">Price Breakdown:</span>
                       </div>
+                      {(() => {
+                        const baseUsd = (parseInt(quantity) / 1000) * parseFloat(serviceDetails.rate);
+                        const baseLkr = convertUsdToLkr(baseUsd, usdRate);
+                        const totalWithProfit = calculatePriceWithProfit(
+                          usdRate,
+                          parseInt(quantity),
+                          parseFloat(serviceDetails.rate)
+                        );
+                        
+                        return (
+                          <>
+                            <div className="flex justify-between items-center text-[10px]">
+                              <span className="text-slate-500">Base price:</span>
+                              <span className="font-bold text-slate-700 dark:text-slate-300">
+                                LKR {baseLkr.toFixed(2)} (${baseUsd.toFixed(2)})
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center text-[10px] text-emerald-600">
+                              <span>+ Profit (fixed):</span>
+                              <span className="font-bold">LKR 50.00</span>
+                            </div>
+                            <div className="border-t border-blue-600/20 my-2 pt-2 flex justify-between items-center">
+                              <span className="text-[9px] font-black uppercase text-slate-500">Total Price:</span>
+                              <div className="text-right">
+                                <span className="text-lg font-black text-blue-600">
+                                  LKR {totalWithProfit.lkr.toFixed(2)}
+                                </span>
+                                <p className="text-[8px] font-bold text-slate-400">
+                                  ≈ ${totalWithProfit.usd.toFixed(2)} USD
+                                </p>
+                              </div>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
@@ -1351,17 +1560,38 @@ useEffect(() => {
                   />
                 </div>
 
+                {/* Current Balance Display */}
+                <div className="p-3 bg-slate-100 dark:bg-slate-800/50 rounded-xl flex items-center justify-between">
+                  <span className="text-[9px] font-black uppercase text-slate-500 flex items-center gap-2">
+                    <Wallet size={12} />
+                    Your Balance:
+                  </span>
+                  <div className="text-right">
+                    <span className="text-sm font-black text-slate-900 dark:text-white">
+                      LKR {userBalance.total_balance}
+                    </span>
+                    <p className="text-[7px] font-bold text-slate-400">
+                      ≈ ${convertLkrToUsd(parseFloat(userBalance.total_balance), usdRate).toFixed(2)} USD
+                    </p>
+                  </div>
+                </div>
+
                 {/* Submit Buttons */}
                 <div className="flex flex-col md:flex-row gap-3 pt-4">
                   <button
                     type="submit"
-                    disabled={orderLoading || !selectedServiceId || !link || !quantity || !currentUser}
+                    disabled={orderLoading || !selectedServiceId || !link || !quantity || !currentUser || insufficientBalance}
                     className="flex-1 bg-blue-600 text-white p-4 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {orderLoading ? (
                       <>
                         <Loader2 size={16} className="animate-spin" />
                         Processing...
+                      </>
+                    ) : insufficientBalance ? (
+                      <>
+                        <AlertCircle size={16} />
+                        Insufficient Funds
                       </>
                     ) : (
                       <>
