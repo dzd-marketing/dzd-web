@@ -115,7 +115,7 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
               <Link to="/" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors">Home</Link>
               <a href="#" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors">About Us</a>
               <a href="#" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors">Terms of Service</a>
-              <a href="#" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors">Contact Us</a>
+              <Link to="/Contact" className="text-slate-500 dark:text-slate-400 hover:text-blue-600">Contact Us</Link>
               <Link to="/Support" className="text-slate-500 dark:text-slate-400 hover:text-blue-600">Support</Link>
             </div>
 
