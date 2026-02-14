@@ -172,8 +172,9 @@ export default function DashboardPage({ user }: any) {
               )}
             </button>
           ))}
-        </div>
+          
 
+        {/* MAIN CONTENT AREA
         <div className="p-4 border-t border-slate-100 dark:border-white/5">
           <div className={`transition-all duration-300 overflow-hidden ${sidebarOpen ? 'block' : 'hidden'}`}>
             <div className="bg-gradient-to-br from-blue-600/5 to-blue-600/10 rounded-xl p-4 border border-blue-600/10">
@@ -191,6 +192,7 @@ export default function DashboardPage({ user }: any) {
               </div>
             </div>
           </div>
+           */}
           
           {!sidebarOpen && (
             <div className="flex justify-center py-3">
