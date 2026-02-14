@@ -3,14 +3,16 @@ import { PlusCircle, Wallet, History, Mail, Zap, ListOrderedIcon } from 'lucide-
 
 const WORKER_URL = "https://dzd-billing-api.sitewasd2026.workers.dev";
 
+// setActiveTab props එක හරහා ලබාගන්නා ලෙස සකසා ඇත
 export default function DashboardHomeView({ user, setActiveTab }: any) {
   const [userBalance, setUserBalance] = useState("0.00");
 
-
+  // Balance එක API එකෙන් ලබාගැනීම
   const fetchBalance = async (uid: string) => {
     try {
       const response = await fetch(`${WORKER_URL}/get-balance?userId=${uid}`);
       const data = await response.json();
+      // total_balance එක update කිරීම
       setUserBalance(parseFloat(data.total_balance || 0).toFixed(2));
     } catch (error) {
       console.error("Error fetching balance:", error);
@@ -21,7 +23,7 @@ export default function DashboardHomeView({ user, setActiveTab }: any) {
     if (user?.uid) {
       fetchBalance(user.uid);
       
-
+      // තත්පර 30කට වරක් ස්වයංක්‍රීයව අලුත් කිරීම (Auto-refresh)
       const interval = setInterval(() => fetchBalance(user.uid), 30000);
       return () => clearInterval(interval);
     }
@@ -37,7 +39,7 @@ export default function DashboardHomeView({ user, setActiveTab }: any) {
           </p>
         </div>
         
-        {/* serices */}
+        {/* Services Tab එකට යාමට setActiveTab('services') භාවිතා කරයි */}
         <button 
           onClick={() => setActiveTab && setActiveTab('services')}
           className="flex items-center gap-2 bg-blue-600 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-blue-600/20 text-sm hover:scale-105 active:scale-95 transition-all"
