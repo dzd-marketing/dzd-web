@@ -24,7 +24,6 @@ interface Ticket {
   userName: string;
 }
 
-// Priority badge color mapping
 const priorityColors: Record<string, string> = {
   Low: 'text-slate-500 bg-slate-500/10',
   Medium: 'text-blue-500 bg-blue-500/10',
