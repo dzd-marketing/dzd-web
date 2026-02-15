@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'; // 👈 Add useLocation
+import PageLoader from './components/PageLoader';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
@@ -56,6 +57,23 @@ function ScrollToTop() {
   }, [pathname]);
 
   return null;
+}
+
+function useNavigationLoader(delay = 300) {
+  const location = useLocation();
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Show loader when route changes
+    setLoading(true);
+
+    // Minimum time loader is visible
+    const timer = setTimeout(() => setLoading(false), delay);
+
+    return () => clearTimeout(timer);
+  }, [location.pathname, delay]);
+
+  return loading;
 }
 
 export default function App() {
@@ -125,6 +143,8 @@ export default function App() {
   const openSignup = () => { setShowSignup(true); setShowLogin(false); };
   const closeModals = () => { setShowLogin(false); setShowSignup(false); };
 
+  const navigationLoading = useNavigationLoader(500); // 500ms loader on page change
+
   if (loading) {
     return (
       <div className="min-h-screen bg-dark flex items-center justify-center">
@@ -135,17 +155,20 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <ScrollToTop /> {/* 👈 Add it here */}
+      <ScrollToTop />
       <div className={`min-h-screen transition-colors duration-200 ${theme === 'dark' ? 'dark bg-dark' : 'bg-slate-50'}`}>
-        <Navbar 
-          theme={theme} 
-          toggleTheme={toggleTheme} 
-          user={user} 
+        <Navbar
+          theme={theme}
+          toggleTheme={toggleTheme}
+          user={user}
           onLogout={handleLogout}
           onLoginClick={openLogin}
           onSignupClick={openSignup}
         />
-        
+
+        {/* Page loader */}
+        {navigationLoading && <PageLoader />}
+
         <main className={`selection-blue transition-all duration-300 ${(showLogin || showSignup) ? 'blur-[8px] scale-[0.99] opacity-50 pointer-events-none' : ''}`}>
           <Routes>
             <Route path="/" element={<LandingPage onSignupClick={openSignup} />} />
@@ -163,22 +186,14 @@ export default function App() {
             <Route path="/about-us" element={<AboutUsPage onSignupClick={openSignup} />} />
           </Routes>
         </main>
+
         <AIChatWidget />
 
-        {/* Modals Overlays */}
         {showLogin && (
-          <LoginPage 
-            onLogin={handleAuth} 
-            onClose={closeModals} 
-            onSwitchToSignup={openSignup}
-          />
+          <LoginPage onLogin={handleAuth} onClose={closeModals} onSwitchToSignup={openSignup} />
         )}
         {showSignup && (
-          <SignupPage 
-            onSignup={handleAuth} 
-            onClose={closeModals} 
-            onSwitchToLogin={openLogin}
-          />
+          <SignupPage onSignup={handleAuth} onClose={closeModals} onSwitchToLogin={openLogin} />
         )}
       </div>
     </BrowserRouter>
