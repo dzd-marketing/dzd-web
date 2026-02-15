@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { 
   MessageCircle, 
   X, 
   Send, 
   Bot, 
-  ChevronDown,
   Sparkles,
   Code,
   PenTool,
-  HelpCircle
+  HelpCircle,
+  ChevronDown,
+  Trash2,
+  Zap
 } from 'lucide-react';
 
 interface Message {
@@ -21,7 +24,7 @@ export default function AIChatWidget() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: "Hi! I'm your AI assistant. How can I help you today?"
+      content: "Hi! I'm your **AI assistant**. How can I help you with your **social media marketing** today?\n\nTry asking me about:\n- Service recommendations\n- Order help\n- Platform questions\n- Technical support"
     }
   ]);
   const [inputValue, setInputValue] = useState('');
@@ -75,11 +78,10 @@ export default function AIChatWidget() {
     }
   }, [isOpen]);
 
-  // Handle click outside to close on mobile
+  // Handle click outside to close on desktop and mobile
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (window.innerWidth <= 768 && 
-          isOpen && 
+      if (isOpen && 
           chatWindowRef.current && 
           chatToggleRef.current &&
           !chatWindowRef.current.contains(e.target as Node) &&
@@ -88,46 +90,59 @@ export default function AIChatWidget() {
       }
     };
 
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
-  const toggleChat = () => {
+  // Handle escape key
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        setIsOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isOpen]);
+
+  const toggleChat = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setIsOpen(!isOpen);
   };
 
   const autoResizeTextarea = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = e.target;
     textarea.style.height = 'auto';
-    textarea.style.height = Math.min(textarea.scrollHeight, 80) + 'px';
+    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
   };
 
   const handleQuickAction = (action: string) => {
     let prompt = '';
     switch (action) {
       case 'code':
-        prompt = "Help me with some coding problems.";
+        prompt = "Help me with API integration code for my SMM panel.";
         break;
       case 'write':
-        prompt = "Help me write something creative.";
+        prompt = "Help me write a promotional message for my social media services.";
         break;
       case 'explain':
-        prompt = "Explain a complex topic in simple terms.";
+        prompt = "Explain how SMM panels work and how to choose the right services.";
         break;
     }
     setInputValue(prompt);
     if (chatInputRef.current) {
       chatInputRef.current.style.height = 'auto';
-      chatInputRef.current.style.height = Math.min(chatInputRef.current.scrollHeight, 80) + 'px';
+      chatInputRef.current.style.height = Math.min(chatInputRef.current.scrollHeight, 120) + 'px';
       chatInputRef.current.focus();
     }
   };
 
-  const clearChatHistory = () => {
+  const clearChatHistory = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setMessages([
       {
         role: 'assistant',
-        content: "Hi! I'm your AI assistant. How can I help you today?"
+        content: "Hi! I'm your **AI assistant**. How can I help you with your **social media marketing** today?\n\nTry asking me about:\n- Service recommendations\n- Order help\n- Platform questions\n- Technical support"
       }
     ]);
     localStorage.removeItem(CONVERSATION_KEY);
@@ -201,8 +216,8 @@ export default function AIChatWidget() {
       setShowTyping(false);
       
       const errorMessage = error instanceof Error && error.message.includes('Failed to fetch')
-        ? 'Network error. Please check your connection.'
-        : 'Sorry, I encountered an error. Please try again.';
+        ? '**Network error** - Please check your internet connection and try again.'
+        : '**Sorry, I encountered an error** - Please try again in a moment.';
       
       setMessages(prev => [...prev, { role: 'assistant', content: errorMessage }]);
     } finally {
@@ -218,50 +233,71 @@ export default function AIChatWidget() {
   };
 
   return (
-    <div id="aiChatWidget" className="fixed bottom-4 md:bottom-6 right-4 md:right-6 z-[9999]">
+    <div id="aiChatWidget" className="fixed bottom-6 right-6 z-[9999]">
       {/* Chat Toggle Button */}
       <button
         ref={chatToggleRef}
         onClick={toggleChat}
-        className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full shadow-2xl flex items-center justify-center text-white hover:scale-110 transition-transform duration-300 hover:shadow-blue-600/30"
+        className="group relative w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-2xl flex items-center justify-center text-white hover:scale-110 active:scale-95 transition-all duration-300 hover:shadow-blue-600/30"
       >
-        {isOpen ? <X size={20} className="md:w-6 md:h-6" /> : <MessageCircle size={20} className="md:w-6 md:h-6" />}
+        {isOpen ? (
+          <X size={24} className="absolute transition-all duration-300" />
+        ) : (
+          <>
+            <MessageCircle size={24} className="absolute transition-all duration-300 group-hover:scale-110" />
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white dark:border-slate-900 rounded-full animate-pulse"></span>
+          </>
+        )}
       </button>
 
       {/* Chat Window */}
       <div
         ref={chatWindowRef}
-        className={`absolute bottom-14 md:bottom-16 right-0 w-[calc(100vw-2rem)] md:w-96 max-w-md h-[550px] md:h-[600px] bg-white dark:bg-[#0d0d1c] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden transition-all duration-200 origin-bottom-right ${
+        className={`absolute bottom-16 right-0 w-[380px] md:w-[400px] h-[600px] bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl flex flex-col overflow-hidden transition-all duration-200 origin-bottom-right ${
           isOpen ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-0 pointer-events-none'
         }`}
       >
         {/* Chat Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 md:p-4 flex items-center justify-between text-white">
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 flex items-center justify-between text-white">
           <div className="flex items-center gap-3">
             <div className="relative">
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/20 flex items-center justify-center border border-white/30">
-                <Bot size={16} className="md:w-5 md:h-5" />
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center border border-white/30 backdrop-blur-sm">
+                <Bot size={20} />
               </div>
-              <div className="absolute bottom-0 right-0 w-2 h-2 md:w-3 md:h-3 bg-green-400 border-2 border-blue-600 rounded-full"></div>
+              <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-blue-600 rounded-full"></div>
             </div>
             <div>
-              <h3 className="font-bold text-sm md:text-base leading-tight">AI Assistant</h3>
-              <p className="text-xs text-white/80">Online • DzD Marketing</p>
+              <h3 className="font-black text-sm uppercase tracking-wider flex items-center gap-1">
+                AI Assistant <Sparkles size={12} className="text-yellow-300" />
+              </h3>
+              <p className="text-[10px] font-bold text-white/80 uppercase tracking-wider flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
+                Online • DzD Marketing
+              </p>
             </div>
           </div>
-          <button
-            onClick={toggleChat}
-            className="hover:bg-white/10 rounded-lg p-1 transition-colors"
-          >
-            <X size={16} className="md:w-[18px] md:h-[18px]" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={clearChatHistory}
+              className="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center transition-colors"
+              title="Clear chat"
+            >
+              <Trash2 size={16} />
+            </button>
+            <button
+              onClick={toggleChat}
+              className="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center transition-colors"
+            >
+              <ChevronDown size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Chat Messages */}
         <div
           ref={chatMessagesRef}
-          className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 bg-slate-50 dark:bg-[#100f23]"
-          style={{ scrollbarWidth: 'thin' }}
+          className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 dark:bg-[#020617]"
+          style={{ scrollbarWidth: 'thin', scrollbarColor: '#3b82f6 #e2e8f0' }}
         >
           {messages.map((msg, index) => (
             <div
@@ -269,27 +305,45 @@ export default function AIChatWidget() {
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {msg.role === 'assistant' && (
-                <div className="flex items-end gap-2 max-w-[85%]">
-                  <div className="bg-blue-600/10 rounded-full w-6 h-6 md:w-8 md:h-8 flex items-center justify-center border border-blue-600/20 shrink-0">
-                    <Bot size={12} className="text-blue-600 md:w-4 md:h-4" />
+                <div className="flex items-start gap-2 max-w-[85%]">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white shadow-lg shrink-0">
+                    <Bot size={14} />
                   </div>
-                  <div className="flex flex-col gap-1 items-start">
-                    <p className="text-blue-600 text-[10px] md:text-[11px] font-bold uppercase tracking-wider ml-1">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider ml-1">
                       AI Assistant
-                    </p>
-                    <div className="text-sm font-normal leading-relaxed rounded-xl rounded-bl-none px-3 md:px-4 py-2 md:py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm border border-slate-200 dark:border-gray-700">
-                      {msg.content}
+                    </span>
+                    <div className="prose prose-sm dark:prose-invert max-w-none bg-white dark:bg-[#0f172a] rounded-2xl rounded-tl-none p-4 shadow-sm border border-slate-200 dark:border-white/5">
+                      <ReactMarkdown
+                        components={{
+                          h1: ({ node, ...props }) => <h1 className="text-lg font-black text-slate-900 dark:text-white mb-2" {...props} />,
+                          h2: ({ node, ...props }) => <h2 className="text-base font-black text-slate-900 dark:text-white mb-2" {...props} />,
+                          h3: ({ node, ...props }) => <h3 className="text-sm font-black text-slate-900 dark:text-white mb-1" {...props} />,
+                          p: ({ node, ...props }) => <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-2 last:mb-0" {...props} />,
+                          strong: ({ node, ...props }) => <strong className="font-black text-blue-600 dark:text-blue-400" {...props} />,
+                          ul: ({ node, ...props }) => <ul className="list-disc list-inside text-sm text-slate-600 dark:text-slate-300 space-y-1 mb-2" {...props} />,
+                          ol: ({ node, ...props }) => <ol className="list-decimal list-inside text-sm text-slate-600 dark:text-slate-300 space-y-1 mb-2" {...props} />,
+                          li: ({ node, ...props }) => <li className="text-sm" {...props} />,
+                          code: ({ node, inline, ...props }) => 
+                            inline ? 
+                              <code className="bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400 px-1 py-0.5 rounded text-xs font-mono" {...props} /> :
+                              <code className="block bg-slate-100 dark:bg-slate-800 p-3 rounded-xl text-xs font-mono overflow-x-auto" {...props} />,
+                          pre: ({ node, ...props }) => <pre className="bg-slate-100 dark:bg-slate-800 p-3 rounded-xl overflow-x-auto mb-3" {...props} />,
+                        }}
+                      >
+                        {msg.content}
+                      </ReactMarkdown>
                     </div>
                   </div>
                 </div>
               )}
               {msg.role === 'user' && (
                 <div className="flex flex-col gap-1 items-end max-w-[85%]">
-                  <p className="text-gray-500 dark:text-gray-400 text-[10px] md:text-[11px] font-bold uppercase tracking-wider mr-1">
+                  <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider mr-1">
                     You
-                  </p>
-                  <div className="text-sm font-normal leading-relaxed rounded-xl rounded-br-none px-3 md:px-4 py-2 md:py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-sm">
-                    {msg.content}
+                  </span>
+                  <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl rounded-br-none p-3 shadow-lg">
+                    <p className="text-sm text-white whitespace-pre-wrap">{msg.content}</p>
                   </div>
                 </div>
               )}
@@ -298,74 +352,83 @@ export default function AIChatWidget() {
 
           {/* Typing Indicator */}
           {showTyping && (
-            <div className="flex items-end gap-2">
-              <div className="bg-blue-600/10 rounded-full w-6 h-6 md:w-8 md:h-8 flex items-center justify-center border border-blue-600/20">
-                <Bot size={12} className="text-blue-600" />
+            <div className="flex items-start gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white shadow-lg">
+                <Bot size={14} />
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-full px-4 py-2 flex gap-1 shadow-sm border border-slate-200 dark:border-gray-700">
-                <div className="w-1 h-1 bg-gray-400 rounded-full animate-bounce"></div>
-                <div className="w-1 h-1 bg-gray-400 rounded-full animate-bounce delay-100"></div>
-                <div className="w-1 h-1 bg-gray-400 rounded-full animate-bounce delay-200"></div>
+              <div className="bg-white dark:bg-[#0f172a] rounded-2xl rounded-tl-none p-4 shadow-sm border border-slate-200 dark:border-white/5">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
               </div>
             </div>
           )}
         </div>
 
         {/* Quick Actions */}
-        <div className="px-4 pt-3 flex gap-2 flex-wrap bg-white dark:bg-[#100f23] border-t border-slate-200 dark:border-gray-800">
-          <button
-            onClick={() => handleQuickAction('code')}
-            className="h-7 md:h-8 px-3 rounded-full bg-slate-100 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 hover:border-blue-500/50 hover:bg-slate-200 dark:hover:bg-gray-700 transition-all text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1"
-          >
-            <Code size={12} /> Code
-          </button>
-          <button
-            onClick={() => handleQuickAction('write')}
-            className="h-7 md:h-8 px-3 rounded-full bg-slate-100 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 hover:border-blue-500/50 hover:bg-slate-200 dark:hover:bg-gray-700 transition-all text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1"
-          >
-            <PenTool size={12} /> Writing
-          </button>
-          <button
-            onClick={() => handleQuickAction('explain')}
-            className="h-7 md:h-8 px-3 rounded-full bg-slate-100 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 hover:border-blue-500/50 hover:bg-slate-200 dark:hover:bg-gray-700 transition-all text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1"
-          >
-            <HelpCircle size={12} /> Explain
-          </button>
-          <button
-            onClick={clearChatHistory}
-            className="h-7 md:h-8 px-3 rounded-full bg-slate-100 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 hover:border-red-500/50 hover:bg-slate-200 dark:hover:bg-gray-700 transition-all text-xs font-medium text-gray-700 dark:text-gray-300 ml-auto"
-          >
-            <span className="text-[10px]">Clear</span>
-          </button>
+        <div className="px-4 py-3 bg-white dark:bg-[#0f172a] border-t border-slate-200 dark:border-white/5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => handleQuickAction('code')}
+              className="h-8 px-3 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1.5"
+            >
+              <Code size={12} /> Code Help
+            </button>
+            <button
+              onClick={() => handleQuickAction('write')}
+              className="h-8 px-3 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1.5"
+            >
+              <PenTool size={12} /> Writing
+            </button>
+            <button
+              onClick={() => handleQuickAction('explain')}
+              className="h-8 px-3 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1.5"
+            >
+              <HelpCircle size={12} /> Explain
+            </button>
+            <button
+              onClick={clearChatHistory}
+              className="h-8 px-3 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 flex items-center gap-1.5 ml-auto"
+            >
+              <Trash2 size={12} /> Clear
+            </button>
+          </div>
         </div>
 
         {/* Input Area */}
-        <div className="p-3 md:p-4 bg-white dark:bg-[#100f23] border-t border-slate-200 dark:border-gray-800">
-          <div className="relative flex items-center gap-2 bg-slate-100 dark:bg-gray-800/50 rounded-xl border border-slate-200 dark:border-gray-700 p-1 focus-within:border-blue-500/50 transition-colors">
-            <textarea
-              ref={chatInputRef}
-              value={inputValue}
-              onChange={(e) => {
-                setInputValue(e.target.value);
-                autoResizeTextarea(e);
-              }}
-              onKeyDown={handleKeyDown}
-              placeholder="Type your message..."
-              rows={1}
-              className="flex-1 bg-transparent border-none focus:ring-0 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 text-sm py-2 px-3 resize-none max-h-20 outline-none"
-              disabled={isStreaming}
-            />
-            <button
-              onClick={sendMessage}
-              disabled={isStreaming || !inputValue.trim()}
-              className="w-8 h-8 md:w-9 md:h-9 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
-            >
-              <Send size={14} className="md:w-4 md:h-4" />
-            </button>
+        <div className="p-4 bg-white dark:bg-[#0f172a] border-t border-slate-200 dark:border-white/5">
+          <div className="relative flex items-end gap-2">
+            <div className="flex-1 relative">
+              <textarea
+                ref={chatInputRef}
+                value={inputValue}
+                onChange={(e) => {
+                  setInputValue(e.target.value);
+                  autoResizeTextarea(e);
+                }}
+                onKeyDown={handleKeyDown}
+                placeholder="Type your message..."
+                rows={1}
+                className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-4 pr-12 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all resize-none max-h-32"
+                disabled={isStreaming}
+              />
+              <button
+                onClick={sendMessage}
+                disabled={isStreaming || !inputValue.trim()}
+                className="absolute right-2 bottom-2 w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+              >
+                <Send size={14} />
+              </button>
+            </div>
           </div>
-          <div className="mt-2 text-center">
-            <p className="text-[8px] md:text-[9px] text-gray-500 dark:text-gray-600 uppercase tracking-wider font-medium flex items-center justify-center gap-1">
-              <Sparkles size={10} /> Powered by DzD AI Labs
+          <div className="mt-2 flex items-center justify-between">
+            <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <Zap size={10} className="text-blue-600" /> Powered by DzD AI Labs
+            </p>
+            <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider">
+              Shift + Enter for new line
             </p>
           </div>
         </div>
