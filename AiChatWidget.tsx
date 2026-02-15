@@ -6,7 +6,6 @@ import {
   MessageCircle, 
   X, 
   Send, 
-  Bot,
   Sparkles,
   Code,
   PenTool,
@@ -85,16 +84,13 @@ Try asking me about:
         const { scrollTop, scrollHeight, clientHeight } = chatMessagesRef.current;
         const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
         
-        // If user scrolls up, set userScrolled to true
         if (!isAtBottom) {
           setUserScrolled(true);
           
-          // Clear previous timeout
           if (scrollTimeoutRef.current) {
             clearTimeout(scrollTimeoutRef.current);
           }
           
-          // Reset userScrolled after 3 seconds of no scrolling
           scrollTimeoutRef.current = setTimeout(() => {
             setUserScrolled(false);
           }, 3000);
@@ -230,13 +226,10 @@ Try asking me about:
       chatInputRef.current.style.height = 'auto';
     }
 
-    // Reset userScrolled to allow auto-scroll for new message
     setUserScrolled(false);
 
-    // Add user message
     setMessages(prev => [...prev, { role: 'user', content: message }]);
     
-    // Show typing indicator
     setShowTyping(true);
     setIsStreaming(true);
 
@@ -269,7 +262,6 @@ Try asking me about:
         const chunk = decoder.decode(value);
         aiResponse += chunk;
 
-        // Update the last message (assistant's response)
         setMessages(prev => {
           const newMessages = [...prev];
           const lastMessage = newMessages[newMessages.length - 1];
@@ -313,6 +305,110 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
     }
   };
 
+  // Markdown components with proper text wrapping
+  const markdownComponents = {
+    // Headers
+    h1: ({ node, ...props }) => (
+      <h1 className="text-xl font-black text-slate-900 dark:text-white mt-4 mb-2 pb-1 border-b border-slate-200 dark:border-white/10 break-words" {...props} />
+    ),
+    h2: ({ node, ...props }) => (
+      <h2 className="text-lg font-black text-slate-900 dark:text-white mt-3 mb-2 break-words" {...props} />
+    ),
+    h3: ({ node, ...props }) => (
+      <h3 className="text-base font-black text-blue-600 dark:text-blue-400 mt-3 mb-1 break-words" {...props} />
+    ),
+    h4: ({ node, ...props }) => (
+      <h4 className="text-sm font-black text-slate-700 dark:text-slate-300 mt-2 mb-1 uppercase tracking-wider break-words" {...props} />
+    ),
+    
+    // Paragraphs
+    p: ({ node, ...props }) => (
+      <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-3 last:mb-0 break-words whitespace-pre-wrap" {...props} />
+    ),
+    
+    // Text formatting
+    strong: ({ node, ...props }) => (
+      <strong className="font-black text-blue-600 dark:text-blue-400 break-words" {...props} />
+    ),
+    em: ({ node, ...props }) => (
+      <em className="italic text-slate-700 dark:text-slate-300 break-words" {...props} />
+    ),
+    
+    // Lists
+    ul: ({ node, ...props }) => (
+      <ul className="list-disc list-outside ml-4 mb-3 space-y-1.5 text-sm text-slate-600 dark:text-slate-300 break-words" {...props} />
+    ),
+    ol: ({ node, ...props }) => (
+      <ol className="list-decimal list-outside ml-4 mb-3 space-y-1.5 text-sm text-slate-600 dark:text-slate-300 break-words" {...props} />
+    ),
+    li: ({ node, ...props }) => (
+      <li className="text-sm leading-relaxed pl-1 marker:text-blue-600 break-words" {...props} />
+    ),
+    
+    // Tables
+    table: ({ node, ...props }) => (
+      <div className="overflow-x-auto my-3 rounded-xl border border-slate-200 dark:border-white/10">
+        <table className="w-full text-sm divide-y divide-slate-200 dark:divide-white/10" {...props} />
+      </div>
+    ),
+    thead: ({ node, ...props }) => (
+      <thead className="bg-slate-50 dark:bg-white/5" {...props} />
+    ),
+    tbody: ({ node, ...props }) => (
+      <tbody className="divide-y divide-slate-200 dark:divide-white/10" {...props} />
+    ),
+    tr: ({ node, ...props }) => (
+      <tr className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors" {...props} />
+    ),
+    th: ({ node, ...props }) => (
+      <th className="px-3 py-2 text-left text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider break-words" {...props} />
+    ),
+    td: ({ node, ...props }) => (
+      <td className="px-3 py-2 text-sm text-slate-600 dark:text-slate-400 break-words" {...props} />
+    ),
+    
+    // Code blocks
+    code: ({ node, inline, className, children, ...props }) => {
+      const match = /language-(\w+)/.exec(className || '');
+      return !inline ? (
+        <pre className="bg-slate-100 dark:bg-slate-800/50 p-3 rounded-xl overflow-x-auto my-3 border border-slate-200 dark:border-white/5">
+          <code className="text-xs font-mono text-slate-800 dark:text-slate-200 whitespace-pre-wrap break-words" {...props}>
+            {children}
+          </code>
+        </pre>
+      ) : (
+        <code className="bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-md text-xs font-mono break-words" {...props}>
+          {children}
+        </code>
+      );
+    },
+    pre: ({ node, ...props }) => (
+      <pre className="bg-slate-100 dark:bg-slate-800/50 p-3 rounded-xl overflow-x-auto my-3 border border-slate-200 dark:border-white/5 text-xs font-mono whitespace-pre-wrap break-words" {...props} />
+    ),
+    
+    // Blockquotes
+    blockquote: ({ node, ...props }) => (
+      <blockquote className="border-l-4 border-blue-600 pl-4 py-1 my-3 text-sm italic text-slate-600 dark:text-slate-400 bg-blue-50 dark:bg-blue-950/30 rounded-r-xl break-words" {...props} />
+    ),
+    
+    // Links
+    a: ({ node, ...props }) => (
+      <a className="text-blue-600 dark:text-blue-400 hover:underline font-medium break-words" target="_blank" rel="noopener noreferrer" {...props}>
+        {props.children}
+      </a>
+    ),
+    
+    // Horizontal rule
+    hr: ({ node, ...props }) => (
+      <hr className="my-4 border-t border-slate-200 dark:border-white/10" {...props} />
+    ),
+    
+    // Line breaks
+    br: ({ node, ...props }) => (
+      <br className="mb-2" {...props} />
+    ),
+  };
+
   return (
     <div id="aiChatWidget" className="fixed bottom-4 md:bottom-6 right-4 md:right-6 z-[9999]">
       {/* Chat Toggle Button */}
@@ -331,14 +427,13 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
         )}
       </button>
 
-      {/* Chat Window */}
+      {/* Desktop Chat Window */}
       <div
         ref={chatWindowRef}
         className={`
-          absolute 
-          bottom-16 right-0
-          w-[380px] md:w-[450px] 
-          h-[650px] 
+          absolute bottom-16 right-0
+          w-[400px] 
+          h-[600px] 
           bg-white dark:bg-[#0f172a] 
           rounded-2xl 
           border border-slate-200 dark:border-white/10 
@@ -348,20 +443,185 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
           transition-all duration-200 
           origin-bottom-right
           ${isOpen ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-0 pointer-events-none'}
-          md:block hidden
+          hidden md:flex
         `}
       >
-        {/* Desktop Chat Window Content - Same as before */}
-        {/* ... desktop content ... */}
+        {/* Desktop Header */}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 flex items-center justify-between text-white shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center border border-white/30 backdrop-blur-sm">
+                <Brain size={20} className="text-white" />
+              </div>
+              <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-blue-600 rounded-full"></div>
+            </div>
+            <div>
+              <h3 className="font-black text-sm uppercase tracking-wider flex items-center gap-1">
+                AI Assistant <Sparkles size={12} className="text-yellow-300" />
+              </h3>
+              <p className="text-[10px] font-bold text-white/80 uppercase tracking-wider flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
+                Online • DzD Marketing
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={clearChatHistory}
+              className="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center transition-colors"
+              title="Clear chat"
+            >
+              <Trash2 size={16} />
+            </button>
+            <button
+              onClick={toggleChat}
+              className="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center transition-colors md:flex"
+              title="Close"
+            >
+              <ChevronDown size={18} />
+            </button>
+          </div>
+        </div>
+
+        {/* Desktop Messages */}
+        <div
+          ref={chatMessagesRef}
+          className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 dark:bg-[#020617]"
+          style={{ 
+            scrollbarWidth: 'thin', 
+            scrollbarColor: '#3b82f6 #e2e8f0'
+          }}
+        >
+          <div className="space-y-4">
+            {messages.map((msg, index) => (
+              <div
+                key={index}
+                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                {msg.role === 'assistant' && (
+                  <div className="flex items-start gap-2 max-w-[85%]">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white shadow-lg shrink-0">
+                      <Brain size={14} />
+                    </div>
+                    <div className="flex flex-col gap-1 flex-1 min-w-0">
+                      <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider ml-1">
+                        AI Assistant
+                      </span>
+                      <div className="prose prose-sm dark:prose-invert max-w-none bg-white dark:bg-[#0f172a] rounded-2xl rounded-tl-none p-4 shadow-sm border border-slate-200 dark:border-white/5 overflow-hidden">
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          rehypePlugins={[rehypeRaw]}
+                          components={markdownComponents}
+                        >
+                          {msg.content.replace(/<br\s*\/?>/g, '\n')}
+                        </ReactMarkdown>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {msg.role === 'user' && (
+                  <div className="flex flex-col gap-1 items-end max-w-[70%]">
+                    <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider mr-1">
+                      You
+                    </span>
+                    <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl rounded-br-none p-3 shadow-lg">
+                      <p className="text-sm text-white whitespace-pre-wrap break-words">{msg.content}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {/* Typing Indicator */}
+            {showTyping && (
+              <div className="flex items-start gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white shadow-lg">
+                  <Brain size={14} />
+                </div>
+                <div className="bg-white dark:bg-[#0f172a] rounded-2xl rounded-tl-none p-4 shadow-sm border border-slate-200 dark:border-white/5">
+                  <div className="flex gap-1.5">
+                    <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={messageEndRef} />
+          </div>
+        </div>
+
+        {/* Desktop Quick Actions */}
+        <div className="px-4 py-3 bg-white dark:bg-[#0f172a] border-t border-slate-200 dark:border-white/5 shrink-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => handleQuickAction('code')}
+              className="h-8 px-3 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1.5"
+            >
+              <Code size={12} /> Code Help
+            </button>
+            <button
+              onClick={() => handleQuickAction('write')}
+              className="h-8 px-3 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1.5"
+            >
+              <PenTool size={12} /> Writing
+            </button>
+            <button
+              onClick={() => handleQuickAction('explain')}
+              className="h-8 px-3 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1.5"
+            >
+              <HelpCircle size={12} /> Explain
+            </button>
+            <button
+              onClick={clearChatHistory}
+              className="h-8 px-3 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 flex items-center gap-1.5 ml-auto"
+            >
+              <Trash2 size={12} /> Clear
+            </button>
+          </div>
+        </div>
+
+        {/* Desktop Input Area */}
+        <div className="p-4 bg-white dark:bg-[#0f172a] border-t border-slate-200 dark:border-white/5 shrink-0">
+          <div className="relative flex items-end gap-2">
+            <div className="flex-1 relative">
+              <textarea
+                ref={chatInputRef}
+                value={inputValue}
+                onChange={(e) => {
+                  setInputValue(e.target.value);
+                  autoResizeTextarea(e);
+                }}
+                onKeyDown={handleKeyDown}
+                placeholder="Type your message..."
+                rows={1}
+                className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-4 pr-12 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all resize-none max-h-24"
+                disabled={isStreaming}
+              />
+              <button
+                onClick={sendMessage}
+                disabled={isStreaming || !inputValue.trim()}
+                className="absolute right-2 bottom-2 w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+              >
+                <Send size={14} />
+              </button>
+            </div>
+          </div>
+          <div className="mt-2 flex items-center justify-between">
+            <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <Zap size={10} className="text-blue-600" /> Powered by DzD AI Labs
+            </p>
+            <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider">
+              Shift + Enter
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Mobile Chat Window - Full Screen */}
       <div
-        ref={chatWindowRef}
         className={`
-          fixed md:hidden
-          bottom-0 left-0 right-0 top-0
-          w-full h-full
+          fixed md:hidden inset-0
           bg-white dark:bg-[#0f172a] 
           flex flex-col 
           overflow-hidden 
@@ -369,7 +629,7 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
           ${isOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-full pointer-events-none'}
         `}
       >
-        {/* Mobile Chat Header */}
+        {/* Mobile Header */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 flex items-center justify-between text-white shrink-0">
           <div className="flex items-center gap-3">
             <div className="relative">
@@ -422,7 +682,7 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {msg.role === 'assistant' && (
-                  <div className="flex items-start gap-2 max-w-[90%]">
+                  <div className="flex items-start gap-2 max-w-[85%]">
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white shadow-lg shrink-0">
                       <Brain size={14} />
                     </div>
@@ -430,13 +690,11 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
                       <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider ml-1">
                         AI Assistant
                       </span>
-                      <div className="prose prose-sm dark:prose-invert max-w-none bg-white dark:bg-[#0f172a] rounded-2xl rounded-tl-none p-4 shadow-sm border border-slate-200 dark:border-white/5 break-words">
+                      <div className="prose prose-sm dark:prose-invert max-w-none bg-white dark:bg-[#0f172a] rounded-2xl rounded-tl-none p-4 shadow-sm border border-slate-200 dark:border-white/5 overflow-hidden">
                         <ReactMarkdown
                           remarkPlugins={[remarkGfm]}
                           rehypePlugins={[rehypeRaw]}
-                          components={{
-                            // ... (keep all your existing markdown components)
-                          }}
+                          components={markdownComponents}
                         >
                           {msg.content.replace(/<br\s*\/?>/g, '\n')}
                         </ReactMarkdown>
@@ -445,7 +703,7 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
                   </div>
                 )}
                 {msg.role === 'user' && (
-                  <div className="flex flex-col gap-1 items-end max-w-[80%]">
+                  <div className="flex flex-col gap-1 items-end max-w-[70%]">
                     <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider mr-1">
                       You
                     </span>
