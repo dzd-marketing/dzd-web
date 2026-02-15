@@ -6,64 +6,23 @@ import {
   Clock,
   PlusCircle,
   Mail,
-  AlertCircle,
   ArrowUpRight,
-  Filter,
   X,
+  Send,
+  Loader,
+  Inbox,
 } from 'lucide-react';
 
-// Dummy ticket data – replace with real data later
-const tickets = [
-  {
-    id: 'TKT-4829',
-    subject: 'TikTok order #1234 not delivered',
-    status: 'Open',
-    priority: 'High',
-    lastUpdate: '2 hours ago',
-    messages: 3,
-  },
-  {
-    id: 'TKT-4830',
-    subject: 'Need to cancel Instagram order',
-    status: 'Pending',
-    priority: 'Medium',
-    lastUpdate: 'Yesterday',
-    messages: 2,
-  },
-  {
-    id: 'TKT-4831',
-    subject: 'Payment verification failed',
-    status: 'Awaiting Reply',
-    priority: 'Urgent',
-    lastUpdate: '5 hours ago',
-    messages: 5,
-  },
-  {
-    id: 'TKT-4832',
-    subject: 'API key not working',
-    status: 'Resolved',
-    priority: 'Low',
-    lastUpdate: '3 days ago',
-    messages: 4,
-  },
-  {
-    id: 'TKT-4833',
-    subject: 'Wrong amount charged',
-    status: 'Closed',
-    priority: 'Medium',
-    lastUpdate: '1 week ago',
-    messages: 6,
-  },
-];
-
-// Status badge color mapping
-const statusColors: Record<string, string> = {
-  Open: 'text-blue-500 bg-blue-500/10',
-  Pending: 'text-amber-500 bg-amber-500/10',
-  'Awaiting Reply': 'text-orange-500 bg-orange-500/10',
-  Resolved: 'text-green-500 bg-green-500/10',
-  Closed: 'text-slate-500 bg-slate-500/10',
-};
+interface Ticket {
+  id: string;
+  subject: string;
+  priority: string;
+  description: string;
+  status: string;
+  createdAt: string;
+  userEmail: string;
+  userName: string;
+}
 
 // Priority badge color mapping
 const priorityColors: Record<string, string> = {
@@ -75,6 +34,22 @@ const priorityColors: Record<string, string> = {
 
 export default function TicketsView({ user }: any) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    subject: '',
+    priority: 'Medium',
+    description: ''
+  });
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
+  // Load tickets from localStorage on mount
+  useEffect(() => {
+    const savedTickets = localStorage.getItem('supportTickets');
+    if (savedTickets) {
+      setTickets(JSON.parse(savedTickets));
+    }
+  }, []);
 
   // Close modal on Escape key
   useEffect(() => {
@@ -85,12 +60,73 @@ export default function TicketsView({ user }: any) {
     return () => window.removeEventListener('keydown', handleEsc);
   }, []);
 
-  const handleCreateTicket = (e: React.FormEvent) => {
+  // Auto-hide success message
+  useEffect(() => {
+    if (showSuccessMessage) {
+      const timer = setTimeout(() => setShowSuccessMessage(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccessMessage]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleCreateTicket = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would normally send the data to your backend
-    console.log('Ticket created');
-    setIsCreateModalOpen(false);
-    // Optionally show a success message or refresh the list
+    setIsSubmitting(true);
+
+    try {
+      // Send email via API
+      const response = await fetch('/api/send-ticket', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          userEmail: user?.email || 'unknown@email.com',
+          userName: user?.fullName || user?.displayName || 'User'
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Create new ticket object
+        const newTicket: Ticket = {
+          id: result.ticketId,
+          ...formData,
+          status: 'Open',
+          createdAt: new Date().toISOString(),
+          userEmail: user?.email || 'unknown@email.com',
+          userName: user?.fullName || user?.displayName || 'User'
+        };
+
+        // Save to localStorage
+        const updatedTickets = [newTicket, ...tickets];
+        setTickets(updatedTickets);
+        localStorage.setItem('supportTickets', JSON.stringify(updatedTickets));
+
+        // Show success message
+        setShowSuccessMessage(true);
+
+        // Reset form and close modal
+        setFormData({ subject: '', priority: 'Medium', description: '' });
+        setIsCreateModalOpen(false);
+      }
+    } catch (error) {
+      console.error('Error creating ticket:', error);
+      alert('Failed to create ticket. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Calculate stats
+  const stats = {
+    total: tickets.length
   };
 
   return (
@@ -113,60 +149,41 @@ export default function TicketsView({ user }: any) {
         </button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          {
-            label: 'Open Tickets',
-            value: '4',
-            icon: <Ticket />,
-            color: 'bg-blue-600',
-            trend: '+2 new',
-          },
-          {
-            label: 'Awaiting Response',
-            value: '2',
-            icon: <MessageCircle />,
-            color: 'bg-amber-600',
-            trend: 'Urgent',
-          },
-          {
-            label: 'Resolved Today',
-            value: '7',
-            icon: <CheckCircle />,
-            color: 'bg-green-600',
-            trend: '+5',
-          },
-          {
-            label: 'Total Tickets',
-            value: '24',
-            icon: <Clock />,
-            color: 'bg-purple-600',
-            trend: 'All time',
-          },
-        ].map((stat, i) => (
-          <div
-            key={i}
-            className="bg-white dark:bg-[#0f172a]/40 p-6 rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-sm hover:border-blue-500/30 transition-colors"
-          >
-            <div className="flex justify-between items-start mb-6">
-              <div
-                className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white ${stat.color} shadow-lg shadow-inherit/20`}
-              >
-                {React.cloneElement(stat.icon as any, { size: 22 })}
-              </div>
-              <span className="text-[10px] font-black text-blue-500 bg-blue-500/10 px-2 py-1 rounded-lg uppercase tracking-widest">
-                {stat.trend}
-              </span>
-            </div>
-            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">
-              {stat.label}
-            </p>
-            <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-              {stat.value}
-            </h3>
+      {/* Success Message */}
+      {showSuccessMessage && (
+        <div className="bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 p-6 rounded-3xl flex items-center gap-4 animate-slide-down">
+          <CheckCircle size={24} />
+          <div>
+            <p className="font-black text-sm">Ticket Created Successfully!</p>
+            <p className="text-xs opacity-80 mt-1">Our team will contact you via email shortly.</p>
           </div>
-        ))}
+          <button 
+            onClick={() => setShowSuccessMessage(false)}
+            className="ml-auto hover:opacity-70"
+          >
+            <X size={18} />
+          </button>
+        </div>
+      )}
+
+      {/* Simple Stats Card - Just Total */}
+      <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-6 max-w-xs">
+        <div className="bg-white dark:bg-[#0f172a]/40 p-6 rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-sm hover:border-blue-500/30 transition-colors">
+          <div className="flex justify-between items-start mb-6">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white bg-purple-600 shadow-lg">
+              <Inbox size={22} />
+            </div>
+            <span className="text-[10px] font-black text-blue-500 bg-blue-500/10 px-2 py-1 rounded-lg uppercase tracking-widest">
+              Total
+            </span>
+          </div>
+          <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">
+            Your Tickets
+          </p>
+          <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            {stats.total}
+          </h3>
+        </div>
       </div>
 
       {/* Tickets List */}
@@ -174,87 +191,85 @@ export default function TicketsView({ user }: any) {
         <div className="bg-white dark:bg-[#0f172a]/40 p-8 rounded-[3rem] border border-slate-200 dark:border-white/5">
           <div className="flex flex-wrap justify-between items-center mb-8">
             <h3 className="text-xl font-black tracking-tight uppercase tracking-widest text-xs text-slate-400">
-              All Tickets
+              Your Submitted Tickets
             </h3>
-            <div className="flex gap-3">
-              <button className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 dark:hover:text-slate-300 flex items-center gap-1">
-                <Filter size={14} /> Filter
-              </button>
-              <button className="text-[10px] font-black text-blue-500 uppercase tracking-widest hover:underline flex items-center gap-1">
-                View All <ArrowUpRight size={14} />
-              </button>
-            </div>
+            <span className="text-[10px] font-black text-slate-400 bg-slate-100 dark:bg-white/5 px-3 py-1.5 rounded-xl">
+              {tickets.length} total
+            </span>
           </div>
 
           <div className="space-y-4">
-            {tickets.map((ticket) => (
-              <div
-                key={ticket.id}
-                className="flex items-center justify-between p-5 rounded-3xl bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-white/5 group hover:bg-white dark:hover:bg-blue-600/5 transition-all cursor-pointer"
-              >
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform shadow-sm border border-slate-100 dark:border-white/5">
-                    <Mail size={20} />
+            {tickets.length > 0 ? (
+              tickets.map((ticket) => (
+                <div
+                  key={ticket.id}
+                  className="flex items-center justify-between p-5 rounded-3xl bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-white/5 group hover:bg-white dark:hover:bg-blue-600/5 transition-all cursor-default"
+                >
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform shadow-sm border border-slate-100 dark:border-white/5">
+                      <Mail size={20} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <p className="font-bold text-sm text-slate-900 dark:text-white">
+                          {ticket.subject}
+                        </p>
+                        <span
+                          className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
+                            priorityColors[ticket.priority]
+                          }`}
+                        >
+                          {ticket.priority}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1.5">
+                        <span>#{ticket.id}</span>
+                        <span>•</span>
+                        <span>{new Date(ticket.createdAt).toLocaleDateString()}</span>
+                        <span>•</span>
+                        <span className="max-w-[200px] truncate">{ticket.description.substring(0, 50)}...</span>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <p className="font-bold text-sm text-slate-900 dark:text-white">
-                        {ticket.subject}
-                      </p>
-                      <span
-                        className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
-                          statusColors[ticket.status]
-                        }`}
-                      >
-                        {ticket.status}
-                      </span>
-                      <span
-                        className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
-                          priorityColors[ticket.priority]
-                        }`}
-                      >
-                        {ticket.priority}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1.5">
-                      <span>#{ticket.id}</span>
-                      <span>•</span>
-                      <span>Updated {ticket.lastUpdate}</span>
-                      <span>•</span>
-                      <span className="flex items-center gap-1">
-                        <MessageCircle size={12} /> {ticket.messages}
-                      </span>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-black text-green-600 bg-green-500/10 px-3 py-1.5 rounded-full">
+                      {ticket.status}
+                    </span>
+                    <ArrowUpRight
+                      size={18}
+                      className="text-slate-300"
+                    />
                   </div>
                 </div>
-                <ArrowUpRight
-                  size={18}
-                  className="text-slate-300 group-hover:text-blue-500 transition-colors"
-                />
+              ))
+            ) : (
+              <div className="text-center py-16">
+                <div className="w-20 h-20 mx-auto bg-slate-100 dark:bg-slate-800/50 rounded-3xl flex items-center justify-center text-slate-400 mb-4">
+                  <Inbox size={32} />
+                </div>
+                <p className="text-slate-500 font-black text-sm uppercase tracking-widest">
+                  No tickets yet
+                </p>
+                <p className="text-slate-400 text-[10px] font-bold mt-1">
+                  Create your first support ticket
+                </p>
+                <button
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="mt-6 flex items-center gap-2 mx-auto bg-blue-600 text-white px-6 py-3 rounded-xl font-black text-xs hover:scale-105 transition-all"
+                >
+                  <PlusCircle size={14} />
+                  Create Ticket
+                </button>
               </div>
-            ))}
+            )}
           </div>
-
-          {tickets.length === 0 && (
-            <div className="text-center py-12">
-              <div className="w-20 h-20 mx-auto bg-slate-100 dark:bg-slate-800/50 rounded-3xl flex items-center justify-center text-slate-400 mb-4">
-                <Mail size={32} />
-              </div>
-              <p className="text-slate-500 font-black text-sm uppercase tracking-widest">
-                No tickets yet
-              </p>
-              <p className="text-slate-400 text-[10px] font-bold mt-1">
-                Create your first support ticket
-              </p>
-            </div>
-          )}
         </div>
       </div>
 
       {/* Create Ticket Modal */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-[#0f172a] rounded-[3rem] border border-slate-200 dark:border-white/5 shadow-2xl max-w-md w-full p-8">
+          <div className="bg-white dark:bg-[#0f172a] rounded-[3rem] border border-slate-200 dark:border-white/5 shadow-2xl max-w-md w-full p-8 animate-scale-up">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-black text-slate-900 dark:text-white">Create New Ticket</h3>
               <button
@@ -272,6 +287,9 @@ export default function TicketsView({ user }: any) {
                   </label>
                   <input
                     type="text"
+                    name="subject"
+                    value={formData.subject}
+                    onChange={handleInputChange}
                     required
                     className="w-full mt-1 p-4 rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-900/30 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                     placeholder="Brief description"
@@ -282,6 +300,9 @@ export default function TicketsView({ user }: any) {
                     Priority
                   </label>
                   <select
+                    name="priority"
+                    value={formData.priority}
+                    onChange={handleInputChange}
                     className="w-full mt-1 p-4 rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-900/30 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                   >
                     <option>Low</option>
@@ -295,26 +316,55 @@ export default function TicketsView({ user }: any) {
                     Description
                   </label>
                   <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
                     rows={4}
                     required
                     className="w-full mt-1 p-4 rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-900/30 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                     placeholder="Describe your issue in detail..."
                   />
                 </div>
+                
+                {/* User info preview */}
+                <div className="bg-slate-50 dark:bg-slate-900/30 p-4 rounded-2xl border border-slate-200 dark:border-white/5">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                    From:
+                  </p>
+                  <p className="text-sm font-medium text-slate-900 dark:text-white">
+                    {user?.fullName || user?.displayName || 'User'}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {user?.email || 'No email provided'}
+                  </p>
+                </div>
               </div>
+              
               <div className="flex gap-3 mt-8">
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
                   className="flex-1 py-4 rounded-2xl border border-slate-200 dark:border-white/5 font-black text-sm hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                  disabled={isSubmitting}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-blue-600/20 text-sm hover:scale-105 active:scale-95 transition-all"
+                  disabled={isSubmitting}
+                  className="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-blue-600/20 text-sm hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
                 >
-                  Submit Ticket
+                  {isSubmitting ? (
+                    <>
+                      <Loader size={16} className="animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send size={16} />
+                      Submit Ticket
+                    </>
+                  )}
                 </button>
               </div>
             </form>
