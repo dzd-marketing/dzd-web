@@ -7,7 +7,7 @@ import {
   ExternalLink, ArrowRight
 } from 'lucide-react';
 
-const WORKER_URL = "https://dzd-billing-api.sitewasd2026.workers.dev";
+const WORKER_URL = import.meta.env.VITE_WORKER_URL;
 
 export const ThemeToggle = ({ theme, toggleTheme }: { theme: string, toggleTheme: () => void }) => {
   return (
