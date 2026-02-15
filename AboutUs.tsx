@@ -430,7 +430,7 @@ const team = [
                 Our <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Story</span>
               </h2>
               <p className="text-slate-500 dark:text-slate-400 text-base lg:text-lg leading-relaxed mb-4">
-                DzD Marketing started with a simple idea: make social media growth accessible, affordable, and reliable for everyone. What began as a small operation run by Danuka Dissanayake has grown into a global platform serving thousands of customers daily.
+                DzD Marketing started with a simple idea: make social media growth accessible, affordable, and reliable for everyone. What began as a small operation run by out admin team has grown into a global platform serving thousands of customers daily.
               </p>
               <p className="text-slate-500 dark:text-slate-400 text-base lg:text-lg leading-relaxed mb-6">
                 Today, our team of three core members works tirelessly to ensure every order is processed smoothly, every customer is supported, and every service meets the highest quality standards.
@@ -572,7 +572,7 @@ const team = [
             {/* Name and title */}
             <div className="text-left">
               <p className="text-base font-black text-slate-900 dark:text-white tracking-tight">
-                Danuka Dissanayake
+                DzD Marketing
               </p>
               <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
                 Founder & CEO
