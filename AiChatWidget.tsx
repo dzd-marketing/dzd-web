@@ -274,7 +274,7 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
   };
 
   return (
-<div id="aiChatWidget" className="fixed bottom-6 right-6 z-[9999]">
+<div id="aiChatWidget" className="fixed right-6 z-[9999] bottom-[calc(5rem+env(safe-area-inset-bottom))] sm:bottom-6">
 
 {/* Chat Toggle Button */} 
   <button ref={chatToggleRef} onClick={toggleChat} 
