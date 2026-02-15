@@ -20,6 +20,54 @@ import TermsofServicePage from './TermsofService';
 import AboutUsPage from './AboutUs';
 import AIChatWidget from './AiChatWidget';
 
+// Loading Spinner Component with inline styles
+const LoadingSpinner = () => {
+  return (
+    <>
+      <style>{`
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+          animation: spin-slow 2s linear infinite;
+        }
+        .animation-delay-150 {
+          animation-delay: 150ms;
+        }
+        .animation-delay-300 {
+          animation-delay: 300ms;
+        }
+        @keyframes pulse-premium {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(1.2); }
+        }
+        .animate-pulse-premium {
+          animation: pulse-premium 2s ease-in-out infinite;
+        }
+      `}</style>
+
+      <div className="fixed inset-0 bg-[#0a0a0a] z-[9999] flex items-center justify-center">
+        <div className="relative">
+          {/* Outer ring */}
+          <div className="w-32 h-32 rounded-full border-2 border-transparent border-t-blue-500 border-r-purple-500 animate-spin-slow"></div>
+          
+          {/* Middle ring */}
+          <div className="absolute inset-2 w-28 h-28 rounded-full border-2 border-transparent border-b-purple-500 border-l-pink-500 animate-spin-slow animation-delay-150"></div>
+          
+          {/* Inner ring */}
+          <div className="absolute inset-4 w-24 h-24 rounded-full border-2 border-transparent border-t-pink-500 border-r-blue-500 animate-spin-slow animation-delay-300"></div>
+          
+          {/* Center dot */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full animate-pulse-premium"></div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
 function ScrollToTop() {
   const { pathname } = useLocation();
 
@@ -63,12 +111,6 @@ function useNavigationLoader(delay = 300) {
 
   return loading;
 }
-
-const LoadingSpinner = () => (
-  <div className="fixed inset-0 bg-dark bg-opacity-90 z-[9999] flex items-center justify-center">
-    <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-  </div>
-);
 
 export default function App() {
   const [theme, setTheme] = useState('dark');
@@ -134,13 +176,9 @@ export default function App() {
   const openSignup = () => { setShowSignup(true); setShowLogin(false); };
   const closeModals = () => { setShowLogin(false); setShowSignup(false); };
 
-  // For initial load - full screen spinner
+  // Initial load spinner
   if (loading) {
-    return (
-      <div className="fixed inset-0 bg-dark flex items-center justify-center z-[9999]">
-        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   const AppContent = () => {
@@ -149,7 +187,7 @@ export default function App() {
     return (
       <>
         <ScrollToTop />
-        {/* Navigation spinner - fixed overlay that covers everything */}
+        {/* Navigation spinner */}
         {navigationLoading && <LoadingSpinner />}
         
         <div className={`min-h-screen transition-colors duration-200 ${theme === 'dark' ? 'dark bg-dark' : 'bg-slate-50'}`}>
