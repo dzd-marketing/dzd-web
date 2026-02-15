@@ -21,8 +21,8 @@ import OrdersPageView from './OrdersPageView';
 import Tickets from './Tickets';
 import WalletPage from './wallet/BillingPageView';
 
-const API_KEY = process.env.NEXT_PUBLIC_SMM_API_KEY;
-const BASE_URL = process.env.NEXT_PUBLIC_SMM_API_URL;
+const API_KEY = import.meta.env.VITE_SMM_API_KEY;
+const BASE_URL = import.meta.env.VITE_SMM_API_URL;
 
 export const fetchSmmApi = async (params: Record<string, string>) => {
   const proxyEndpoint = "/api/proxy";
