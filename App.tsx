@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-// Remove PageLoader import
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
@@ -65,9 +64,8 @@ function useNavigationLoader(delay = 300) {
   return loading;
 }
 
-// Create a reusable LoadingSpinner component
 const LoadingSpinner = () => (
-  <div className="min-h-screen bg-dark flex items-center justify-center">
+  <div className="fixed inset-0 bg-dark bg-opacity-90 z-[9999] flex items-center justify-center">
     <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
   </div>
 );
@@ -136,9 +134,13 @@ export default function App() {
   const openSignup = () => { setShowSignup(true); setShowLogin(false); };
   const closeModals = () => { setShowLogin(false); setShowSignup(false); };
 
-  // Use the same LoadingSpinner for initial load
+  // For initial load - full screen spinner
   if (loading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="fixed inset-0 bg-dark flex items-center justify-center z-[9999]">
+        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
   }
 
   const AppContent = () => {
@@ -147,6 +149,9 @@ export default function App() {
     return (
       <>
         <ScrollToTop />
+        {/* Navigation spinner - fixed overlay that covers everything */}
+        {navigationLoading && <LoadingSpinner />}
+        
         <div className={`min-h-screen transition-colors duration-200 ${theme === 'dark' ? 'dark bg-dark' : 'bg-slate-50'}`}>
           <Navbar
             theme={theme}
@@ -156,9 +161,6 @@ export default function App() {
             onLoginClick={openLogin}
             onSignupClick={openSignup}
           />
-
-          {/* Show the same blue spinner for navigation loading */}
-          {navigationLoading && <LoadingSpinner />}
 
           <main className={`selection-blue transition-all duration-300 ${(showLogin || showSignup) ? 'blur-[8px] scale-[0.99] opacity-50 pointer-events-none' : ''}`}>
             <Routes>
