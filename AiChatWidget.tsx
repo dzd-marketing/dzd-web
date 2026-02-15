@@ -41,6 +41,7 @@ Try asking me about:
   const [inputValue, setInputValue] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [showTyping, setShowTyping] = useState(false);
+  const [windowHeight, setWindowHeight] = useState(window.innerHeight);
   
   const chatMessagesRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
@@ -49,6 +50,16 @@ Try asking me about:
 
   const API_ENDPOINT = "https://chat-widget-blue.vercel.app/api/chat";
   const CONVERSATION_KEY = 'dzd_chat_history';
+
+  // Handle viewport height for mobile
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowHeight(window.innerHeight);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Load saved conversation
   useEffect(() => {
@@ -289,9 +300,12 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
         )}
       </button>
 
-      {/* Chat Window - Premium Layout */}
+      {/* Chat Window - Full height fix for mobile */}
       <div
         ref={chatWindowRef}
+        style={{
+          maxHeight: isOpen ? (window.innerWidth <= 640 ? `${windowHeight}px` : '650px') : '0px'
+        }}
         className={`
           absolute bottom-16 right-0
           bg-white dark:bg-[#0f172a] 
@@ -303,9 +317,9 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
           /* Desktop styles */
           w-[380px] md:w-[450px] h-[650px] rounded-2xl
           
-          /* Mobile Fullscreen */
+          /* Mobile Fullscreen - using dvh for dynamic viewport height */
           sm:w-[380px] sm:h-[650px] sm:rounded-2xl
-          max-sm:fixed max-sm:inset-0 max-sm:w-screen max-sm:h-screen max-sm:rounded-none
+          max-sm:fixed max-sm:inset-0 max-sm:w-screen max-sm:rounded-none
           
           ${isOpen ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-0 pointer-events-none'}
         `}
