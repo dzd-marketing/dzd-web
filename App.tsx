@@ -19,6 +19,7 @@ import ContactPage from './Contact';
 import TermsofServicePage from './TermsofService';
 import AboutUsPage from './AboutUs';
 import AIChatWidget from './AiChatWidget';
+import PricingPage from './PricingPage';
 
 // Loading Spinner Component with inline styles
 const LoadingSpinner = () => {
@@ -215,6 +216,7 @@ export default function App() {
               <Route path="/terms-of-service" element={<TermsofServicePage />} />
               <Route path="/about-us" element={<AboutUsPage onSignupClick={openSignup} />} />
               <Route path="*" element={<Navigate to="/" />} />
+              <Route path="/pricing" element={<PricingPage onSignupClick={openSignup} />} />
             </Routes>
           </main>
 
