@@ -143,7 +143,6 @@ export default function App() {
   const openSignup = () => { setShowSignup(true); setShowLogin(false); };
   const closeModals = () => { setShowLogin(false); setShowSignup(false); };
 
-  const navigationLoading = useNavigationLoader(500); // 500ms loader on page change
 
   if (loading) {
     return (
@@ -153,49 +152,59 @@ export default function App() {
     );
   }
 
+  // 👇 wrap your router in a new inner component
+  const AppContent = () => {
+    const navigationLoading = useNavigationLoader(500); // ✅ now inside BrowserRouter
+
+    return (
+      <>
+        <ScrollToTop />
+        <div className={`min-h-screen transition-colors duration-200 ${theme === 'dark' ? 'dark bg-dark' : 'bg-slate-50'}`}>
+          <Navbar
+            theme={theme}
+            toggleTheme={toggleTheme}
+            user={user}
+            onLogout={handleLogout}
+            onLoginClick={openLogin}
+            onSignupClick={openSignup}
+          />
+
+          {navigationLoading && <PageLoader />}
+
+          <main className={`selection-blue transition-all duration-300 ${(showLogin || showSignup) ? 'blur-[8px] scale-[0.99] opacity-50 pointer-events-none' : ''}`}>
+            <Routes>
+              <Route path="/" element={<LandingPage onSignupClick={openSignup} />} />
+              <Route path="/onboarding" element={<OnboardingPage user={user} onComplete={handleOnboardingComplete} />} />
+              <Route path="/dashboard/*" element={<DashboardPage user={user} />} />
+              <Route path="/forgot" element={<ForgotPasswordPage />} />
+              <Route path="/support" element={<SupportView />} />
+              <Route path="/support/how-to-use" element={<HowToUseView />} />
+              <Route path="/support/article/:slug" element={<ArticleView />} />
+              <Route path="/support/category/:categorySlug" element={<CategoryView />} />
+              <Route path="/wallet" element={<WalletPage user={user} />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/terms-of-service" element={<TermsofServicePage />} />
+              <Route path="/about-us" element={<AboutUsPage onSignupClick={openSignup} />} />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </main>
+
+          <AIChatWidget />
+
+          {showLogin && (
+            <LoginPage onLogin={handleAuth} onClose={closeModals} onSwitchToSignup={openSignup} />
+          )}
+          {showSignup && (
+            <SignupPage onSignup={handleAuth} onClose={closeModals} onSwitchToLogin={openLogin} />
+          )}
+        </div>
+      </>
+    );
+  };
+
   return (
     <BrowserRouter>
-      <ScrollToTop />
-      <div className={`min-h-screen transition-colors duration-200 ${theme === 'dark' ? 'dark bg-dark' : 'bg-slate-50'}`}>
-        <Navbar
-          theme={theme}
-          toggleTheme={toggleTheme}
-          user={user}
-          onLogout={handleLogout}
-          onLoginClick={openLogin}
-          onSignupClick={openSignup}
-        />
-
-        {/* Page loader */}
-        {navigationLoading && <PageLoader />}
-
-        <main className={`selection-blue transition-all duration-300 ${(showLogin || showSignup) ? 'blur-[8px] scale-[0.99] opacity-50 pointer-events-none' : ''}`}>
-          <Routes>
-            <Route path="/" element={<LandingPage onSignupClick={openSignup} />} />
-            <Route path="/onboarding" element={<OnboardingPage user={user} onComplete={handleOnboardingComplete} />} />
-            <Route path="/dashboard/*" element={<DashboardPage user={user} />} />
-            <Route path="/forgot" element={<ForgotPasswordPage />} />
-            <Route path="/support" element={<SupportView />} />
-            <Route path="/support/how-to-use" element={<HowToUseView />} />
-            <Route path="/support/article/:slug" element={<ArticleView />} />
-            <Route path="/support/category/:categorySlug" element={<CategoryView />} />
-            <Route path="/wallet" element={<WalletPage user={user} />} />
-            <Route path="*" element={<Navigate to="/" />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/terms-of-service" element={<TermsofServicePage />} />
-            <Route path="/about-us" element={<AboutUsPage onSignupClick={openSignup} />} />
-          </Routes>
-        </main>
-
-        <AIChatWidget />
-
-        {showLogin && (
-          <LoginPage onLogin={handleAuth} onClose={closeModals} onSwitchToSignup={openSignup} />
-        )}
-        {showSignup && (
-          <SignupPage onSignup={handleAuth} onClose={closeModals} onSwitchToLogin={openLogin} />
-        )}
-      </div>
+      <AppContent /> {/* ✅ navigation loader works here */}
     </BrowserRouter>
   );
 }
