@@ -303,7 +303,7 @@ const team = [
   {
     name: 'Akash',
     role: 'Admin Team',
-    image: 'authors/akash.HEIC',
+    image: 'authors/akash.png',
     social: { 
       facebook: 'https://www.facebook.com/share/18cBXTmeXN/?mibextid=wwXIfr', 
       whatsapp: 'https://wa.me/94766247995', 
