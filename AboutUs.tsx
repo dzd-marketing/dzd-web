@@ -301,7 +301,7 @@ const team = [
     }
   },
   {
-    name: 'Akash',
+    name: 'Akash Kavindu',
     role: 'Admin Team',
     image: 'authors/akash.png',
     social: { 
