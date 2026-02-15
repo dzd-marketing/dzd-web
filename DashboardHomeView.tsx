@@ -4,7 +4,7 @@ import { auth, db } from './firebase';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 
-const WORKER_URL = "https://dzd-billing-api.sitewasd2026.workers.dev";
+const WORKER_URL = process.env.NEXT_PUBLIC_WORKER_URL;
 
 export default function DashboardHomeView({ user, setActiveTab }: any) {
     const navigate = useNavigate();
