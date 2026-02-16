@@ -804,8 +804,6 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
         </RevealSection>
       </section>
 
-      {/* ========== FOOTER ========== */}
-      <Footer />
     </div>
   );
 }
