@@ -21,7 +21,8 @@ import {
   Instagram,
   Youtube,
   ChevronRight,
-  LifeBuoy
+  LifeBuoy,
+  MessageCircle
 } from 'lucide-react';
 import { auth } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -178,7 +179,7 @@ export default function ContactPage({ onSignupClick }: { onSignupClick?: () => v
                 <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">Email Us</h3>
                 <p className="text-slate-500 dark:text-slate-400 text-sm mb-3">24/7 support</p>
                 <a href="mailto:support@dzdmarketing.com" className="text-blue-600 dark:text-blue-400 text-sm font-bold hover:underline">
-                  support@dzdmarketing.com
+                  educatelux1@gmail.com
                 </a>
               </div>
             </RevealSection>
@@ -191,7 +192,7 @@ export default function ContactPage({ onSignupClick }: { onSignupClick?: () => v
                 <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">WhatsApp</h3>
                 <p className="text-slate-500 dark:text-slate-400 text-sm mb-3">Instant replies</p>
                 <a href="https://wa.me/18001234567" className="text-purple-600 dark:text-purple-400 text-sm font-bold hover:underline">
-                  +1 (800) 123-4567
+                  +94 77 612 1326
                 </a>
               </div>
             </RevealSection>
@@ -352,21 +353,45 @@ export default function ContactPage({ onSignupClick }: { onSignupClick?: () => v
                     <div>
                       <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Social Media</p>
                       <div className="flex items-center gap-3 mt-2">
-                        <a href="#" className="w-8 h-8 bg-slate-200 dark:bg-white/10 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-blue-600 hover:text-white transition-all">
-                          <Twitter size={14} />
-                        </a>
-                        <a href="#" className="w-8 h-8 bg-slate-200 dark:bg-white/10 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-blue-600 hover:text-white transition-all">
-                          <Facebook size={14} />
-                        </a>
-                        <a href="#" className="w-8 h-8 bg-slate-200 dark:bg-white/10 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-blue-600 hover:text-white transition-all">
-                          <Instagram size={14} />
-                        </a>
-                        <a href="#" className="w-8 h-8 bg-slate-200 dark:bg-white/10 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-blue-600 hover:text-white transition-all">
-                          <Linkedin size={14} />
-                        </a>
-                        <a href="#" className="w-8 h-8 bg-slate-200 dark:bg-white/10 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-blue-600 hover:text-white transition-all">
-                          <Youtube size={14} />
-                        </a>
+     {/* WhatsApp */}
+    <a
+      href="https://whatsapp.com/channel/0029VbBSLK7CRs1j1WRhuv1w"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="w-8 h-8 bg-slate-200 dark:bg-white/10 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-blue-600 hover:text-white transition-all"
+    >
+      <MessageCircle size={14} />
+    </a>
+
+    {/* Facebook */}
+    <a
+      href="https://www.facebook.com/share/18cBXTmeXN/?mibextid=wwXIfr"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="w-8 h-8 bg-slate-200 dark:bg-white/10 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-blue-600 hover:text-white transition-all"
+    >
+      <Facebook size={14} />
+    </a>
+
+    {/* Instagram */}
+    <a
+      href="https://www.instagram.com/a4.diil"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="w-8 h-8 bg-slate-200 dark:bg-white/10 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-blue-600 hover:text-white transition-all"
+    >
+      <Instagram size={14} />
+    </a>
+
+    {/* YouTube */}
+    <a
+      href="https://www.youtube.com/@quizontal"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="w-8 h-8 bg-slate-200 dark:bg-white/10 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-blue-600 hover:text-white transition-all"
+    >
+      <Youtube size={14} />
+    </a>
                       </div>
                     </div>
                   </div>
@@ -381,19 +406,6 @@ export default function ContactPage({ onSignupClick }: { onSignupClick?: () => v
               </div>
             </RevealSection>
           </div>
-        </div>
-      </section>
-
-      {/* ========== MAP / LOCATION (Optional placeholder) ========== */}
-      <section className="py-12 bg-slate-50 dark:bg-[#050b1a]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <RevealSection>
-            <div className="bg-slate-200 dark:bg-[#0f172a] rounded-2xl lg:rounded-3xl h-64 lg:h-80 overflow-hidden border border-slate-300 dark:border-white/5 flex items-center justify-center text-slate-500">
-              {/* In a real project, embed a Google Map here */}
-              <MapPin size={32} className="opacity-50" />
-              <span className="ml-2">Interactive map would be embedded here</span>
-            </div>
-          </RevealSection>
         </div>
       </section>
 
