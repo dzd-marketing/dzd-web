@@ -179,7 +179,7 @@ const AntiDevTools = ({ children }: { children: React.ReactNode }) => {
           {/* Full screen image overlay */}
           <div className="relative w-full h-full flex flex-col items-center justify-center">
             <img 
-              src="/devtools-warning.jpg" // Make sure this image exists in your public folder
+              src="/dzd-preview.png" // Make sure this image exists in your public folder
               alt="Developer Tools Detected"
               className="w-full h-full object-cover"
             />
