@@ -70,6 +70,153 @@ const LoadingSpinner = () => {
   );
 };
 
+// Anti-DevTools Component
+const AntiDevTools = ({ children }: { children: React.ReactNode }) => {
+  const [devToolsOpen, setDevToolsOpen] = useState(false);
+  const [showWarning, setShowWarning] = useState(false);
+  const warningShownRef = React.useRef(false);
+
+  useEffect(() => {
+    // Function to detect devtools
+    const detectDevTools = () => {
+      const start = performance.now();
+      debugger; // This will pause execution if devtools is open
+      const end = performance.now();
+      
+      // If the debugger caused a significant delay (>100ms), devtools is likely open
+      if (end - start > 100) {
+        if (!warningShownRef.current) {
+          setShowWarning(true);
+          warningShownRef.current = true;
+          setDevToolsOpen(true);
+        }
+        return true;
+      }
+      return false;
+    };
+
+    // Function to handle right click
+    const handleRightClick = (e: MouseEvent) => {
+      e.preventDefault();
+      if (!warningShownRef.current) {
+        setShowWarning(true);
+        warningShownRef.current = true;
+        setDevToolsOpen(true);
+      }
+      return false;
+    };
+
+    // Function to handle keyboard shortcuts
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check for devtools shortcuts
+      const isDevToolsShortcut = 
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) || // Ctrl+Shift+I/J/C
+        (e.ctrlKey && e.key === 'U' || e.key === 'u') || // Ctrl+U (view source)
+        (e.key === 'F12') || // F12
+        (e.metaKey && e.altKey && e.key === 'I' || e.key === 'i'); // Cmd+Option+I (Mac)
+
+      if (isDevToolsShortcut) {
+        e.preventDefault();
+        if (!warningShownRef.current) {
+          setShowWarning(true);
+          warningShownRef.current = true;
+          setDevToolsOpen(true);
+        }
+      }
+    };
+
+    // Function to check devtools periodically
+    const checkDevToolsInterval = setInterval(() => {
+      detectDevTools();
+      
+      // Additional detection methods
+      const widthThreshold = window.outerWidth - window.innerWidth > 160;
+      const heightThreshold = window.outerHeight - window.innerHeight > 160;
+      
+      if ((widthThreshold || heightThreshold) && !warningShownRef.current) {
+        setShowWarning(true);
+        warningShownRef.current = true;
+        setDevToolsOpen(true);
+      }
+    }, 1000);
+
+    // Add event listeners
+    document.addEventListener('contextmenu', handleRightClick);
+    document.addEventListener('keydown', handleKeyDown);
+    
+    // Also prevent text selection via CSS
+    document.documentElement.style.userSelect = 'none';
+    document.documentElement.style.webkitUserSelect = 'none';
+    document.documentElement.style.msUserSelect = 'none';
+    document.documentElement.style.mozUserSelect = 'none';
+
+    return () => {
+      document.removeEventListener('contextmenu', handleRightClick);
+      document.removeEventListener('keydown', handleKeyDown);
+      clearInterval(checkDevToolsInterval);
+      
+      // Reset styles on unmount
+      document.documentElement.style.userSelect = '';
+      document.documentElement.style.webkitUserSelect = '';
+      document.documentElement.style.msUserSelect = '';
+      document.documentElement.style.mozUserSelect = '';
+    };
+  }, []);
+
+  // Function to handle refresh - only way to close warning
+  const handleRefresh = () => {
+    window.location.reload();
+  };
+
+  return (
+    <>
+      {/* DevTools Warning Overlay */}
+      {showWarning && (
+        <div 
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/95 backdrop-blur-xl"
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+        >
+          {/* Full screen image overlay */}
+          <div className="relative w-full h-full flex flex-col items-center justify-center">
+            <img 
+              src="/devtools-warning.jpg" // Make sure this image exists in your public folder
+              alt="Developer Tools Detected"
+              className="w-full h-full object-cover"
+            />
+            
+            {/* Optional overlay text */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/30">
+              <div className="bg-black/80 backdrop-blur-md p-8 rounded-2xl max-w-md mx-4 text-center border border-red-500/30">
+                <h1 className="text-3xl font-black text-white mb-4 tracking-tighter uppercase">
+                  ⚠️ Developer Tools Detected
+                </h1>
+                <p className="text-gray-300 mb-6 text-sm font-bold uppercase tracking-wider">
+                  For security reasons, developer tools are not allowed on this website.
+                  <br />
+                  <br />
+                  Please refresh the page to continue.
+                </p>
+                <button
+                  onClick={handleRefresh}
+                  className="bg-red-600 hover:bg-red-700 text-white font-black py-4 px-8 rounded-xl uppercase tracking-widest text-sm transition-all transform hover:scale-105 shadow-2xl shadow-red-600/30"
+                >
+                  Refresh Page
+                </button>
+                <p className="text-gray-500 text-[10px] uppercase tracking-wider mt-4">
+                  This warning cannot be closed until page refresh
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Your app content */}
+      {children}
+    </>
+  );
+};
+
 function ScrollToTop() {
   const { pathname } = useLocation();
 
@@ -186,42 +333,8 @@ export default function App() {
   const AppContent = () => {
     const navigationLoading = useNavigationLoader(500);
 
-      useEffect(() => {
-    let trapImage: HTMLImageElement | null = null;
-
-    const checkDevTools = () => {
-      const widthThreshold = window.outerWidth - window.innerWidth > 160;
-      const heightThreshold = window.outerHeight - window.innerHeight > 160;
-      const devToolsOpen = widthThreshold || heightThreshold;
-
-      if (devToolsOpen) {
-        if (!trapImage) {
-          trapImage = document.createElement('img');
-          trapImage.src = '/dzd-preview.png'; // put your image in /public folder
-          trapImage.style.position = 'fixed';
-          trapImage.style.top = '0';
-          trapImage.style.left = '0';
-          trapImage.style.width = '100vw';
-          trapImage.style.height = '100vh';
-          trapImage.style.zIndex = '9999';
-          trapImage.style.pointerEvents = 'none';
-          document.body.appendChild(trapImage);
-        }
-      } else {
-        if (trapImage) {
-          trapImage.remove(); // remove image only if dev tools is closed
-          trapImage = null;
-        }
-      }
-    };
-
-    const interval = setInterval(checkDevTools, 500);
-
-    return () => clearInterval(interval);
-  }, []);
-
     return (
-      <>
+      <AntiDevTools>
         <ScrollToTop />
         {/* Navigation spinner */}
         {navigationLoading && <LoadingSpinner />}
@@ -235,7 +348,6 @@ export default function App() {
             onLoginClick={openLogin}
             onSignupClick={openSignup}
           />
-
 
           <main className={`selection-blue transition-all duration-300 ${(showLogin || showSignup) ? 'blur-[8px] scale-[0.99] opacity-50 pointer-events-none' : ''}`}>
             <Routes>
@@ -259,7 +371,6 @@ export default function App() {
           <AIChatWidget />
           <Footer user={user} onSignupClick={openSignup} />
 
-
           {showLogin && (
             <LoginPage onLogin={handleAuth} onClose={closeModals} onSwitchToSignup={openSignup} />
           )}
@@ -267,7 +378,7 @@ export default function App() {
             <SignupPage onSignup={handleAuth} onClose={closeModals} onSwitchToLogin={openLogin} />
           )}
         </div>
-      </>
+      </AntiDevTools>
     );
   };
 
