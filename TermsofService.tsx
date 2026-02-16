@@ -606,8 +606,6 @@ export default function TermsOfServicePage() {
         </div>
       </div>
 
-      {/* Footer - replaced with imported Footer component */}
-      <Footer />
     </div>
   );
 }
