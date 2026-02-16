@@ -316,17 +316,17 @@ export default function LoginPage({ onLogin, onClose, onSwitchToSignup }: { onLo
                 </div>
 
                 {/* Cloudflare Turnstile CAPTCHA */}
-                <div className={`flex justify-center my-4 ${captchaError ? 'captcha-error' : ''}`}>
-                  <Turnstile
-                    ref={turnstileRef}
-                    sitekey={siteKey}
-                    onVerify={onCaptchaVerify}
-                    onExpire={onCaptchaExpire}
-                    onError={onCaptchaError}
-                    theme="dark"
-                    className="scale-90 sm:scale-100"
-                  />
-                </div>
+<div className={`flex justify-center my-4 ${captchaError ? 'ring-2 ring-red-500 rounded-lg animate-[shake_0.5s_ease-in-out]' : ''}`}>
+  <Turnstile
+    ref={turnstileRef}
+    sitekey={siteKey}
+    onVerify={onCaptchaVerify}
+    onExpire={onCaptchaExpire}
+    onError={onCaptchaError}
+    theme="dark"
+    className="scale-90 sm:scale-100"
+  />
+</div>
 
                 <button
                   type="submit"
