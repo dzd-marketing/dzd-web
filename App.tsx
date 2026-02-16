@@ -71,301 +71,284 @@ const LoadingSpinner = () => {
   );
 };
 
-// Anti-DevTools Component - Maximum Security
+// Anti-DevTools Component - Maximum Security (No Pause, No Escape)
 const AntiDevTools = ({ children }: { children: React.ReactNode }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [blocked, setBlocked] = useState(false);
-  const devtoolsDetectedRef = React.useRef(false);
-  const redirectInProgressRef = React.useRef(false);
+  const securityRef = React.useRef({
+    detected: false,
+    redirecting: false,
+    blocked: false
+  });
 
   useEffect(() => {
-    // Detect if mobile device
+    // Detect mobile first
     const checkMobile = () => {
-      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-      const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
-      setIsMobile(mobileRegex.test(userAgent));
+      const ua = navigator.userAgent;
+      const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+      setIsMobile(mobile);
+      return mobile;
     };
     
-    checkMobile();
+    const isMobileDevice = checkMobile();
+    if (isMobileDevice) return; // Skip all security on mobile
 
-    // Function to block the page completely
-    const blockPage = () => {
-      if (blocked || isMobile) return;
-      setBlocked(true);
-      
-      // Clear the entire document
-      document.documentElement.innerHTML = '';
-      
-      // Create a full-screen blocker
-      const blocker = document.createElement('div');
-      blocker.style.position = 'fixed';
-      blocker.style.top = '0';
-      blocker.style.left = '0';
-      blocker.style.width = '100%';
-      blocker.style.height = '100%';
-      blocker.style.backgroundColor = 'black';
-      blocker.style.zIndex = '9999999';
-      blocker.style.display = 'flex';
-      blocker.style.alignItems = 'center';
-      blocker.style.justifyContent = 'center';
-      
-      // Add image
-      const img = document.createElement('img');
-      img.src = 'https://www.dzd-marketing.site/dzd-preview.png';
-      img.style.width = '100%';
-      img.style.height = '100%';
-      img.style.objectFit = 'cover';
-      
-      blocker.appendChild(img);
-      document.body.appendChild(blocker);
-      
-      // Disable all interactions
-      document.body.style.pointerEvents = 'none';
-      document.body.style.overflow = 'hidden';
-      
-      // Prevent any navigation
-      window.addEventListener('popstate', (e) => {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        history.pushState(null, '', window.location.href);
-      });
-      
-      // Disable back button completely
-      history.pushState(null, '', window.location.href);
-      window.addEventListener('popstate', function(event) {
-        history.pushState(null, '', window.location.href);
-      });
-    };
+    // CRITICAL: Override debugger BEFORE anything else
+    const overrideDebugger = () => {
+      // Override Function constructor to prevent debugger creation
+      const originalFunction = window.Function;
+      window.Function = function(...args: any[]) {
+        const code = args[args.length - 1];
+        if (typeof code === 'string' && code.includes('debugger')) {
+          args[args.length - 1] = '/* blocked */';
+        }
+        return originalFunction.apply(this, args);
+      } as any;
 
-    // Function to force redirect with maximum obstruction
-    const forceRedirect = () => {
-      if (devtoolsDetectedRef.current || redirectInProgressRef.current || isMobile) return;
-      
-      redirectInProgressRef.current = true;
-      devtoolsDetectedRef.current = true;
-      
-      try {
-        // Method 1: Try to block page first
-        blockPage();
-        
-        // Method 2: Multiple redirect attempts
-        const redirectUrl = 'https://www.dzd-marketing.site/dzd-preview.png';
-        
-        // Try different redirect methods
-        setTimeout(() => {
-          window.location.replace(redirectUrl);
-        }, 10);
-        
-        setTimeout(() => {
-          window.location.href = redirectUrl;
-        }, 20);
-        
-        setTimeout(() => {
-          window.open(redirectUrl, '_self');
-        }, 30);
-        
-        setTimeout(() => {
-          document.location = redirectUrl;
-        }, 40);
-        
-        // Method 3: If redirect fails, keep blocking
-        setTimeout(() => {
-          if (!blocked) {
-            blockPage();
-          }
-        }, 100);
-        
-      } catch (error) {
-        // If redirect fails, block page
-        blockPage();
-      }
-    };
+      // Override eval to block debugger
+      const originalEval = window.eval;
+      window.eval = function(code: string) {
+        if (typeof code === 'string' && code.includes('debugger')) {
+          return '/* blocked */';
+        }
+        return originalEval(code);
+      };
 
-    // Override console methods to prevent debugging
-    const overrideConsole = () => {
-      const originalConsole = { ...console };
-      const consoleMethods = ['log', 'debug', 'info', 'warn', 'error', 'table', 'trace'];
-      
-      consoleMethods.forEach(method => {
-        try {
-          (console as any)[method] = () => {};
-        } catch (e) {}
-      });
-      
-      // Restore if devtools closes (unlikely but just in case)
-      return () => {
-        consoleMethods.forEach(method => {
-          try {
-            (console as any)[method] = originalConsole[method as keyof Console];
-          } catch (e) {}
-        });
+      // Block new Function debugger
+      const originalNewFunction = Function.prototype.constructor;
+      Function.prototype.constructor = function(...args: any[]) {
+        const code = args[args.length - 1];
+        if (typeof code === 'string' && code.includes('debugger')) {
+          args[args.length - 1] = '/* blocked */';
+        }
+        return originalNewFunction.apply(this, args);
       };
     };
 
-    // Enhanced detection methods that don't pause
-    const detectDevTools = () => {
-      if (devtoolsDetectedRef.current || isMobile) return true;
-
-      // Method 1: Check dimensions (fast, no pause)
-      const widthThreshold = window.outerWidth - window.innerWidth > 160;
-      const heightThreshold = window.outerHeight - window.innerHeight > 160;
+    // IMMEDIATE PAGE BLOCK FUNCTION
+    const blockPageImmediately = () => {
+      if (securityRef.current.blocked) return;
+      securityRef.current.blocked = true;
+      securityRef.current.detected = true;
       
-      if (widthThreshold || heightThreshold) {
-        forceRedirect();
-        return true;
-      }
-
-      // Method 2: Check for debugger without pausing
-      const start = performance.now();
-      let debuggerDetected = false;
-      
-      // Use try-catch to avoid pause
       try {
-        // This won't pause if devtools is closed
-        const func = new Function('debugger;');
-        func();
-        const end = performance.now();
+        // Clear everything
+        document.documentElement.innerHTML = '';
+        document.body.innerHTML = '';
         
-        if (end - start > 50) {
-          debuggerDetected = true;
-        }
+        // Create new document structure
+        const html = document.documentElement;
+        const head = document.createElement('head');
+        const body = document.createElement('body');
+        
+        // Add meta tags to prevent any navigation
+        const meta = document.createElement('meta');
+        meta.httpEquiv = 'Cache-Control';
+        meta.content = 'no-cache, no-store, must-revalidate';
+        head.appendChild(meta);
+        
+        const meta2 = document.createElement('meta');
+        meta2.httpEquiv = 'Pragma';
+        meta2.content = 'no-cache';
+        head.appendChild(meta2);
+        
+        const meta3 = document.createElement('meta');
+        meta3.httpEquiv = 'Expires';
+        meta3.content = '0';
+        head.appendChild(meta3);
+        
+        // Create fullscreen image
+        const img = document.createElement('img');
+        img.src = 'https://www.dzd-marketing.site/dzd-preview.png';
+        img.style.position = 'fixed';
+        img.style.top = '0';
+        img.style.left = '0';
+        img.style.width = '100vw';
+        img.style.height = '100vh';
+        img.style.objectFit = 'cover';
+        img.style.zIndex = '999999999';
+        img.style.pointerEvents = 'none';
+        
+        body.appendChild(img);
+        html.appendChild(head);
+        html.appendChild(body);
+        
+        // CRITICAL: Override all navigation
+        window.onbeforeunload = () => {
+          return false;
+        };
+        
+        // Block all history changes
+        const originalPushState = history.pushState;
+        const originalReplaceState = history.replaceState;
+        
+        history.pushState = function() {
+          // Redirect to image URL instead
+          window.location.replace('https://www.dzd-marketing.site/dzd-preview.png');
+          return originalPushState.apply(this, arguments as any);
+        };
+        
+        history.replaceState = function() {
+          window.location.replace('https://www.dzd-marketing.site/dzd-preview.png');
+          return originalReplaceState.apply(this, arguments as any);
+        };
+        
+        // Force redirect every millisecond
+        setInterval(() => {
+          if (!securityRef.current.redirecting) {
+            securityRef.current.redirecting = true;
+            window.location.replace('https://www.dzd-marketing.site/dzd-preview.png');
+          }
+        }, 1);
+        
       } catch (e) {
-        debuggerDetected = true;
+        // If block fails, force redirect
+        window.location.replace('https://www.dzd-marketing.site/dzd-preview.png');
       }
+    };
+
+    // DETECTION METHODS (Non-blocking)
+    const detectAndBlock = () => {
+      if (securityRef.current.detected) return true;
+
+      // Method 1: Dimension check (fastest)
+      const widthDiff = window.outerWidth - window.innerWidth;
+      const heightDiff = window.outerHeight - window.innerHeight;
       
-      if (debuggerDetected) {
-        forceRedirect();
+      if (widthDiff > 150 || heightDiff > 150) {
+        blockPageImmediately();
         return true;
       }
 
-      // Method 3: Check for devtools via toString
+      // Method 2: Console check (no pause)
       try {
-        const element = new Error();
-        if (element.stack && element.stack.includes('debugger')) {
-          forceRedirect();
+        if (console && (console as any).firebug) {
+          blockPageImmediately();
           return true;
         }
       } catch (e) {}
 
-      // Method 4: Check for devtools via console profile
+      // Method 3: Performance check (no debugger)
+      const start = performance.now();
+      const check = new Error().stack;
+      const end = performance.now();
+      
+      if (end - start > 10) {
+        blockPageImmediately();
+        return true;
+      }
+
+      // Method 4: Check for devtools via toString
       try {
-        if ((console as any).profile) {
-          forceRedirect();
-          return true;
-        }
+        const element = document.createElement('div');
+        element.__defineGetter__('id', function() {
+          blockPageImmediately();
+          return '';
+        });
+        console.log(element);
       } catch (e) {}
 
       return false;
     };
 
-    // Run immediate detection without pausing
-    const runImmediateDetection = () => {
-      // Override console first
-      overrideConsole();
+    // Run detection BEFORE anything loads
+    const runPreemptiveDetection = () => {
+      // Override debugger first
+      overrideDebugger();
       
-      // Run detection multiple times quickly
-      for (let i = 0; i < 5; i++) {
-        setTimeout(() => {
-          detectDevTools();
-        }, i * 50);
+      // Run detection in a tight loop (no pauses)
+      for (let i = 0; i < 100; i++) {
+        if (detectAndBlock()) break;
       }
+      
+      // Keep detecting continuously
+      const interval = setInterval(() => {
+        if (!securityRef.current.detected) {
+          detectAndBlock();
+        }
+      }, 10); // Check every 10ms
+      
+      return interval;
     };
 
-    // Run immediately
-    runImmediateDetection();
+    // Start detection
+    const detectionInterval = runPreemptiveDetection();
 
-    // Silent right-click prevention
-    const handleRightClick = (e: MouseEvent) => {
-      if (!isMobile) {
+    // Block all input events
+    const blockAllEvents = (e: Event) => {
+      if (securityRef.current.detected) return;
+      
+      // Block right click
+      if (e.type === 'contextmenu') {
         e.preventDefault();
         e.stopPropagation();
         return false;
       }
-    };
-
-    // Handle keyboard shortcuts
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (isMobile || devtoolsDetectedRef.current) return;
-
-      const isDevToolsShortcut = 
-        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) ||
-        (e.ctrlKey && e.key === 'U' || e.key === 'u') ||
-        (e.key === 'F12') ||
-        (e.metaKey && e.altKey && e.key === 'I' || e.key === 'i') ||
-        (e.key === 'S' && (e.ctrlKey || e.metaKey) && e.shiftKey) ||
-        (e.ctrlKey && e.shiftKey && e.key === 'C' || e.key === 'c'); // Element inspector
-
-      if (isDevToolsShortcut) {
-        e.preventDefault();
-        e.stopPropagation();
-        forceRedirect();
-      }
-
-      // Also block view source
-      if (e.ctrlKey && e.key === 'u' || e.key === 'U') {
-        e.preventDefault();
-        forceRedirect();
+      
+      // Block keyboard shortcuts
+      if (e.type === 'keydown') {
+        const ke = e as KeyboardEvent;
+        if (
+          ke.key === 'F12' ||
+          (ke.ctrlKey && ke.shiftKey && ke.key === 'I') ||
+          (ke.ctrlKey && ke.shiftKey && ke.key === 'J') ||
+          (ke.ctrlKey && ke.shiftKey && ke.key === 'C') ||
+          (ke.ctrlKey && ke.key === 'u') ||
+          (ke.metaKey && ke.altKey && ke.key === 'I')
+        ) {
+          e.preventDefault();
+          e.stopPropagation();
+          blockPageImmediately();
+          return false;
+        }
       }
     };
 
-    // Prevent text selection on desktop
-    const handleSelectStart = (e: Event) => {
-      if (!isMobile) {
-        e.preventDefault();
-      }
-    };
+    // Add event listeners with highest priority
+    document.addEventListener('contextmenu', blockAllEvents, { capture: true });
+    document.addEventListener('keydown', blockAllEvents, { capture: true });
+    document.addEventListener('selectstart', (e) => e.preventDefault(), { capture: true });
+    document.addEventListener('copy', (e) => e.preventDefault(), { capture: true });
+    document.addEventListener('cut', (e) => e.preventDefault(), { capture: true });
+    document.addEventListener('paste', (e) => e.preventDefault(), { capture: true });
 
-    // Add all event listeners
-    document.addEventListener('contextmenu', handleRightClick);
-    document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('selectstart', handleSelectStart);
-    
-    // Override devtools opening methods
-    window.addEventListener('resize', () => {
-      if (!isMobile) {
-        detectDevTools();
+    // Trap user on page
+    history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', (e) => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if (securityRef.current.detected) {
+        window.location.replace('https://www.dzd-marketing.site/dzd-preview.png');
+      } else {
+        history.pushState(null, '', window.location.href);
       }
     });
 
-    // Periodic checks
-    const checkInterval = setInterval(() => {
-      if (!devtoolsDetectedRef.current && !isMobile) {
-        detectDevTools();
-      }
-    }, 200); // Check more frequently
-
-    // Prevent navigation away from block page
+    // Prevent page unload
     window.addEventListener('beforeunload', (e) => {
-      if (devtoolsDetectedRef.current) {
+      if (securityRef.current.detected) {
         e.preventDefault();
         e.returnValue = '';
         return '';
       }
     });
 
-    // Prevent back/forward navigation
-    history.pushState(null, '', window.location.href);
-    window.addEventListener('popstate', (e) => {
-      if (devtoolsDetectedRef.current) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        history.pushState(null, '', window.location.href);
+    // Final check - if detection missed, this will catch it
+    setTimeout(() => {
+      if (!securityRef.current.detected) {
+        detectAndBlock();
       }
-    });
+    }, 100);
 
     return () => {
-      document.removeEventListener('contextmenu', handleRightClick);
-      document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('selectstart', handleSelectStart);
-      window.removeEventListener('resize', detectDevTools);
-      clearInterval(checkInterval);
+      clearInterval(detectionInterval);
+      document.removeEventListener('contextmenu', blockAllEvents, { capture: true });
+      document.removeEventListener('keydown', blockAllEvents, { capture: true });
     };
-  }, [isMobile, blocked]);
+  }, []);
 
-  // If blocked, render nothing (already handled by DOM manipulation)
-  if (blocked) {
-    return null;
-  }
+  // If blocked, render nothing (page is already cleared)
+  if (blocked) return null;
 
   return <>{children}</>;
 };
