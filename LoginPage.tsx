@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, User, Eye, EyeOff, X, Check, Loader2, Zap } from 'lucide-react';
+import { Lock, User, Eye, EyeOff, X, Check, Loader2, Zap, Shield } from 'lucide-react';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
+import Turnstile from 'react-turnstile';
 
 export default function LoginPage({ onLogin, onClose, onSwitchToSignup }: { onLogin: (u: any) => void, onClose: () => void, onSwitchToSignup: () => void }) {
   const [email, setEmail] = useState('');
@@ -12,7 +13,13 @@ export default function LoginPage({ onLogin, onClose, onSwitchToSignup }: { onLo
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaError, setCaptchaError] = useState(false);
+  const turnstileRef = useRef(null);
   const navigate = useNavigate();
+
+  // Get site key from environment variables
+  const siteKey = import.meta.env.VITE_CLOUDFLARE_TURNSTILE_SITE_KEY;
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -27,15 +34,54 @@ export default function LoginPage({ onLogin, onClose, onSwitchToSignup }: { onLo
     
     setTimeout(() => {
       onClose(); // Close login modal
-      navigate('/dashboard'); // ✅ Redirect to dashboard (NOT window.location.href)
+      navigate('/dashboard'); // ✅ Redirect to dashboard
     }, 1500);
+  };
+
+  const verifyCaptcha = async (token: string) => {
+    try {
+      // You'll need to create a backend endpoint to verify the token
+      const response = await fetch('/api/verify-captcha', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token }),
+      });
+      
+      const data = await response.json();
+      return data.success;
+    } catch (error) {
+      console.error('Captcha verification failed:', error);
+      return false;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate captcha
+    if (!captchaToken) {
+      setError('Please complete the security check');
+      setCaptchaError(true);
+      return;
+    }
+
     setLoading(true);
     setError('');
+    
     try {
+      // First verify the captcha with your backend
+      const isValidCaptcha = await verifyCaptcha(captchaToken);
+      
+      if (!isValidCaptcha) {
+        setError('Security check failed. Please try again.');
+        setCaptchaToken(null);
+        setLoading(false);
+        return;
+      }
+
+      // Proceed with authentication
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
       handleAuthSuccess({ 
@@ -46,14 +92,33 @@ export default function LoginPage({ onLogin, onClose, onSwitchToSignup }: { onLo
     } catch (err: any) {
       setError(err.message.includes('auth/invalid-credential') ? 'Invalid email address or password. please check and try again!' : err.message);
       setLoading(false);
+      // Reset captcha on failure
+      setCaptchaToken(null);
     }
   };
 
   const handleGoogleLogin = async () => {
+    // Google login might also need captcha verification
+    if (!captchaToken) {
+      setError('Please complete the security check');
+      setCaptchaError(true);
+      return;
+    }
+
     setLoading(true);
     setError('');
-    const provider = new GoogleAuthProvider();
+    
     try {
+      const isValidCaptcha = await verifyCaptcha(captchaToken);
+      
+      if (!isValidCaptcha) {
+        setError('Security check failed. Please try again.');
+        setCaptchaToken(null);
+        setLoading(false);
+        return;
+      }
+
+      const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const userDoc = await getDoc(doc(db, 'users', result.user.uid));
       handleAuthSuccess({ 
@@ -64,12 +129,28 @@ export default function LoginPage({ onLogin, onClose, onSwitchToSignup }: { onLo
     } catch (err: any) {
       setError(err.message);
       setLoading(false);
+      setCaptchaToken(null);
     }
   };
 
   const handleRestoreClick = () => {
     onClose();
     navigate('/forgot');
+  };
+
+  const onCaptchaVerify = (token: string) => {
+    setCaptchaToken(token);
+    setCaptchaError(false);
+    setError('');
+  };
+
+  const onCaptchaExpire = () => {
+    setCaptchaToken(null);
+  };
+
+  const onCaptchaError = () => {
+    setCaptchaError(true);
+    setError('Security check failed. Please try again.');
   };
 
   return (
@@ -182,57 +263,70 @@ export default function LoginPage({ onLogin, onClose, onSwitchToSignup }: { onLo
               )}
 
               <form onSubmit={handleSubmit} className="space-y-5 lg:space-y-6">
-{/* Email Field */}
-<div>
-  <label className="block text-[9px] lg:text-[10px] font-black uppercase tracking-widest text-slate-600 mb-1.5 lg:mb-2 ml-1">
-    Email
-  </label>
-  <div className="relative">
-    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 w-[18px] h-[18px] lg:w-5 lg:h-5" />
-    <input
-      required
-      type="email"
-      value={email}
-      onChange={e => setEmail(e.target.value)}
-      className="w-full h-12 lg:h-14 bg-[#0a1121] border border-white/5 rounded-xl pl-12 pr-4 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm placeholder:text-slate-700"
-      placeholder="mail@example.com"
-    />
-  </div>
-</div>
+                {/* Email Field */}
+                <div>
+                  <label className="block text-[9px] lg:text-[10px] font-black uppercase tracking-widest text-slate-600 mb-1.5 lg:mb-2 ml-1">
+                    Email
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 w-[18px] h-[18px] lg:w-5 lg:h-5" />
+                    <input
+                      required
+                      type="email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      className="w-full h-12 lg:h-14 bg-[#0a1121] border border-white/5 rounded-xl pl-12 pr-4 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm placeholder:text-slate-700"
+                      placeholder="mail@example.com"
+                    />
+                  </div>
+                </div>
 
-{/* Password Field */}
-<div>
-  <div className="flex justify-between items-center px-1 mb-1.5 lg:mb-2">
-    <label className="text-[9px] lg:text-[10px] font-black uppercase tracking-widest text-slate-600">
-      Password
-    </label>
-    <button
-      type="button"
-      onClick={handleRestoreClick}
-      className="text-[9px] lg:text-[10px] font-black text-blue-500 hover:text-blue-400 uppercase tracking-widest transition-colors"
-    >
-      Forgot Password?
-    </button>
-  </div>
-  <div className="relative">
-    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 w-[18px] h-[18px] lg:w-5 lg:h-5" />
-    <input
-      required
-      type={showPassword ? "text" : "password"}
-      value={password}
-      onChange={e => setPassword(e.target.value)}
-      className="w-full h-12 lg:h-14 bg-[#0a1121] border border-white/5 rounded-xl pl-12 pr-12 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm placeholder:text-slate-700"
-      placeholder="••••••••"
-    />
-    <button
-      type="button"
-      onClick={() => setShowPassword(!showPassword)}
-      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-white transition-colors"
-    >
-      {showPassword ? <EyeOff size={18} className="lg:w-5 lg:h-5" /> : <Eye size={18} className="lg:w-5 lg:h-5" />}
-    </button>
-  </div>
-</div>
+                {/* Password Field */}
+                <div>
+                  <div className="flex justify-between items-center px-1 mb-1.5 lg:mb-2">
+                    <label className="text-[9px] lg:text-[10px] font-black uppercase tracking-widest text-slate-600">
+                      Password
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleRestoreClick}
+                      className="text-[9px] lg:text-[10px] font-black text-blue-500 hover:text-blue-400 uppercase tracking-widest transition-colors"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 w-[18px] h-[18px] lg:w-5 lg:h-5" />
+                    <input
+                      required
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      className="w-full h-12 lg:h-14 bg-[#0a1121] border border-white/5 rounded-xl pl-12 pr-12 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm placeholder:text-slate-700"
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-white transition-colors"
+                    >
+                      {showPassword ? <EyeOff size={18} className="lg:w-5 lg:h-5" /> : <Eye size={18} className="lg:w-5 lg:h-5" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Cloudflare Turnstile CAPTCHA */}
+                <div className={`flex justify-center my-4 ${captchaError ? 'captcha-error' : ''}`}>
+                  <Turnstile
+                    ref={turnstileRef}
+                    sitekey={siteKey}
+                    onVerify={onCaptchaVerify}
+                    onExpire={onCaptchaExpire}
+                    onError={onCaptchaError}
+                    theme="dark"
+                    className="scale-90 sm:scale-100"
+                  />
+                </div>
 
                 <button
                   type="submit"
@@ -242,7 +336,10 @@ export default function LoginPage({ onLogin, onClose, onSwitchToSignup }: { onLo
                   {loading ? (
                     <Loader2 className="animate-spin lg:w-5 lg:h-5" size={18} />
                   ) : (
-                    'Login'
+                    <>
+                      <Shield size={16} className="lg:w-5 lg:h-5" />
+                      Login
+                    </>
                   )}
                 </button>
               </form>
@@ -258,7 +355,8 @@ export default function LoginPage({ onLogin, onClose, onSwitchToSignup }: { onLo
 
               <button
                 onClick={handleGoogleLogin}
-                className="w-full bg-[#0a1121] border border-white/5 h-12 lg:h-14 rounded-xl flex items-center justify-center gap-3 lg:gap-4 font-bold text-white hover:bg-[#0f172a] transition-all text-[11px] lg:text-xs uppercase tracking-wider"
+                disabled={loading}
+                className="w-full bg-[#0a1121] border border-white/5 h-12 lg:h-14 rounded-xl flex items-center justify-center gap-3 lg:gap-4 font-bold text-white hover:bg-[#0f172a] transition-all text-[11px] lg:text-xs uppercase tracking-wider disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 <svg className="w-4 h-4 lg:w-5 lg:h-5" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
