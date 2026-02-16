@@ -71,10 +71,12 @@ const LoadingSpinner = () => {
   );
 };
 
-// Anti-DevTools Component - Desktop Only, Silent Blocking with Immediate Detection
+// Anti-DevTools Component - Maximum Security
 const AntiDevTools = ({ children }: { children: React.ReactNode }) => {
   const [isMobile, setIsMobile] = useState(false);
+  const [blocked, setBlocked] = useState(false);
   const devtoolsDetectedRef = React.useRef(false);
+  const redirectInProgressRef = React.useRef(false);
 
   useEffect(() => {
     // Detect if mobile device
@@ -86,166 +88,284 @@ const AntiDevTools = ({ children }: { children: React.ReactNode }) => {
     
     checkMobile();
 
-    // Function to redirect to preview image
-    const redirectToPreview = () => {
-      if (!devtoolsDetectedRef.current && !isMobile) {
-        devtoolsDetectedRef.current = true;
-        // Use window.location.replace for immediate redirect (doesn't add to history)
-        window.location.replace('https://www.dzd-marketing.site/dzd-preview.png');
+    // Function to block the page completely
+    const blockPage = () => {
+      if (blocked || isMobile) return;
+      setBlocked(true);
+      
+      // Clear the entire document
+      document.documentElement.innerHTML = '';
+      
+      // Create a full-screen blocker
+      const blocker = document.createElement('div');
+      blocker.style.position = 'fixed';
+      blocker.style.top = '0';
+      blocker.style.left = '0';
+      blocker.style.width = '100%';
+      blocker.style.height = '100%';
+      blocker.style.backgroundColor = 'black';
+      blocker.style.zIndex = '9999999';
+      blocker.style.display = 'flex';
+      blocker.style.alignItems = 'center';
+      blocker.style.justifyContent = 'center';
+      
+      // Add image
+      const img = document.createElement('img');
+      img.src = 'https://www.dzd-marketing.site/dzd-preview.png';
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = 'cover';
+      
+      blocker.appendChild(img);
+      document.body.appendChild(blocker);
+      
+      // Disable all interactions
+      document.body.style.pointerEvents = 'none';
+      document.body.style.overflow = 'hidden';
+      
+      // Prevent any navigation
+      window.addEventListener('popstate', (e) => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        history.pushState(null, '', window.location.href);
+      });
+      
+      // Disable back button completely
+      history.pushState(null, '', window.location.href);
+      window.addEventListener('popstate', function(event) {
+        history.pushState(null, '', window.location.href);
+      });
+    };
+
+    // Function to force redirect with maximum obstruction
+    const forceRedirect = () => {
+      if (devtoolsDetectedRef.current || redirectInProgressRef.current || isMobile) return;
+      
+      redirectInProgressRef.current = true;
+      devtoolsDetectedRef.current = true;
+      
+      try {
+        // Method 1: Try to block page first
+        blockPage();
+        
+        // Method 2: Multiple redirect attempts
+        const redirectUrl = 'https://www.dzd-marketing.site/dzd-preview.png';
+        
+        // Try different redirect methods
+        setTimeout(() => {
+          window.location.replace(redirectUrl);
+        }, 10);
+        
+        setTimeout(() => {
+          window.location.href = redirectUrl;
+        }, 20);
+        
+        setTimeout(() => {
+          window.open(redirectUrl, '_self');
+        }, 30);
+        
+        setTimeout(() => {
+          document.location = redirectUrl;
+        }, 40);
+        
+        // Method 3: If redirect fails, keep blocking
+        setTimeout(() => {
+          if (!blocked) {
+            blockPage();
+          }
+        }, 100);
+        
+      } catch (error) {
+        // If redirect fails, block page
+        blockPage();
       }
     };
 
-    // IMMEDIATE DETECTION METHODS
-
-    // Method 1: Check window dimensions (devtools open on side)
-    const checkDimensions = () => {
-      if (isMobile || devtoolsDetectedRef.current) return false;
+    // Override console methods to prevent debugging
+    const overrideConsole = () => {
+      const originalConsole = { ...console };
+      const consoleMethods = ['log', 'debug', 'info', 'warn', 'error', 'table', 'trace'];
       
+      consoleMethods.forEach(method => {
+        try {
+          (console as any)[method] = () => {};
+        } catch (e) {}
+      });
+      
+      // Restore if devtools closes (unlikely but just in case)
+      return () => {
+        consoleMethods.forEach(method => {
+          try {
+            (console as any)[method] = originalConsole[method as keyof Console];
+          } catch (e) {}
+        });
+      };
+    };
+
+    // Enhanced detection methods that don't pause
+    const detectDevTools = () => {
+      if (devtoolsDetectedRef.current || isMobile) return true;
+
+      // Method 1: Check dimensions (fast, no pause)
       const widthThreshold = window.outerWidth - window.innerWidth > 160;
       const heightThreshold = window.outerHeight - window.innerHeight > 160;
       
       if (widthThreshold || heightThreshold) {
-        redirectToPreview();
+        forceRedirect();
         return true;
       }
-      return false;
-    };
 
-    // Method 2: Debugger detection (most reliable)
-    const checkDebugger = () => {
-      if (isMobile || devtoolsDetectedRef.current) return false;
-      
+      // Method 2: Check for debugger without pausing
       const start = performance.now();
-      debugger;
-      const end = performance.now();
+      let debuggerDetected = false;
       
-      if (end - start > 100) {
-        redirectToPreview();
-        return true;
-      }
-      return false;
-    };
-
-    // Method 3: Check for console (if devtools is open, console might be accessible)
-    const checkConsole = () => {
-      if (isMobile || devtoolsDetectedRef.current) return false;
-      
+      // Use try-catch to avoid pause
       try {
-        // Check if console is open by testing a property that only exists when devtools is open
-        if (console && (console as any).profiles) {
-          redirectToPreview();
-          return true;
+        // This won't pause if devtools is closed
+        const func = new Function('debugger;');
+        func();
+        const end = performance.now();
+        
+        if (end - start > 50) {
+          debuggerDetected = true;
         }
       } catch (e) {
-        // Ignore errors
+        debuggerDetected = true;
       }
-      return false;
-    };
-
-    // Method 4: Date.toString() detection
-    const checkDateToString = () => {
-      if (isMobile || devtoolsDetectedRef.current) return false;
       
-      const element = document.createElement('div');
-      Object.defineProperty(element, 'id', {
-        get: function() {
-          redirectToPreview();
-          return '';
-        }
-      });
-      
-      // This will trigger the getter if devtools is open
-      console.log(element);
-    };
-
-    // Method 5: Performance timing check (alternative debugger method)
-    const checkPerformance = () => {
-      if (isMobile || devtoolsDetectedRef.current) return false;
-      
-      const startTime = performance.now();
-      (function() { return false; }['constructor']('debugger')());
-      const endTime = performance.now();
-      
-      if (endTime - startTime > 100) {
-        redirectToPreview();
+      if (debuggerDetected) {
+        forceRedirect();
         return true;
       }
+
+      // Method 3: Check for devtools via toString
+      try {
+        const element = new Error();
+        if (element.stack && element.stack.includes('debugger')) {
+          forceRedirect();
+          return true;
+        }
+      } catch (e) {}
+
+      // Method 4: Check for devtools via console profile
+      try {
+        if ((console as any).profile) {
+          forceRedirect();
+          return true;
+        }
+      } catch (e) {}
+
       return false;
     };
 
-    // Run all checks immediately
-    const runImmediateChecks = () => {
-      // Run checks in sequence
-      checkDimensions();
-      checkDebugger();
-      checkConsole();
-      checkPerformance();
+    // Run immediate detection without pausing
+    const runImmediateDetection = () => {
+      // Override console first
+      overrideConsole();
       
-      // This one is async, so we call it separately
-      setTimeout(() => {
-        checkDateToString();
-      }, 0);
+      // Run detection multiple times quickly
+      for (let i = 0; i < 5; i++) {
+        setTimeout(() => {
+          detectDevTools();
+        }, i * 50);
+      }
     };
 
-    // Run checks immediately when component mounts
-    runImmediateChecks();
+    // Run immediately
+    runImmediateDetection();
 
-    // Silent right-click prevention (no messages)
+    // Silent right-click prevention
     const handleRightClick = (e: MouseEvent) => {
       if (!isMobile) {
         e.preventDefault();
-        // Silently block - no redirect, no messages
+        e.stopPropagation();
         return false;
       }
     };
 
-    // Handle keyboard shortcuts for devtools
+    // Handle keyboard shortcuts
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (isMobile || devtoolsDetectedRef.current) return; // Skip if already detected
+      if (isMobile || devtoolsDetectedRef.current) return;
 
-      // Check for devtools shortcuts
       const isDevToolsShortcut = 
-        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) || // Ctrl+Shift+I/J/C
-        (e.ctrlKey && e.key === 'U' || e.key === 'u') || // Ctrl+U (view source)
-        (e.key === 'F12') || // F12
-        (e.metaKey && e.altKey && e.key === 'I' || e.key === 'i') || // Cmd+Option+I (Mac)
-        (e.key === 'S' && (e.ctrlKey || e.metaKey) && e.shiftKey); // Ctrl+Shift+S (Save as)
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) ||
+        (e.ctrlKey && e.key === 'U' || e.key === 'u') ||
+        (e.key === 'F12') ||
+        (e.metaKey && e.altKey && e.key === 'I' || e.key === 'i') ||
+        (e.key === 'S' && (e.ctrlKey || e.metaKey) && e.shiftKey) ||
+        (e.ctrlKey && e.shiftKey && e.key === 'C' || e.key === 'c'); // Element inspector
 
       if (isDevToolsShortcut) {
         e.preventDefault();
-        redirectToPreview();
+        e.stopPropagation();
+        forceRedirect();
+      }
+
+      // Also block view source
+      if (e.ctrlKey && e.key === 'u' || e.key === 'U') {
+        e.preventDefault();
+        forceRedirect();
       }
     };
 
-    // Periodic checks for devtools that might be opened after page load
-    const checkInterval = setInterval(() => {
-      if (devtoolsDetectedRef.current) return;
-      
-      // Re-run checks
-      checkDimensions();
-      checkDebugger();
-      checkConsole();
-      checkPerformance();
-    }, 1000);
+    // Prevent text selection on desktop
+    const handleSelectStart = (e: Event) => {
+      if (!isMobile) {
+        e.preventDefault();
+      }
+    };
 
-    // Add event listeners
+    // Add all event listeners
     document.addEventListener('contextmenu', handleRightClick);
     document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('selectstart', handleSelectStart);
     
-    // Also check when window gains focus (user might have opened devtools in another tab)
-    window.addEventListener('focus', () => {
-      if (!devtoolsDetectedRef.current) {
-        runImmediateChecks();
+    // Override devtools opening methods
+    window.addEventListener('resize', () => {
+      if (!isMobile) {
+        detectDevTools();
+      }
+    });
+
+    // Periodic checks
+    const checkInterval = setInterval(() => {
+      if (!devtoolsDetectedRef.current && !isMobile) {
+        detectDevTools();
+      }
+    }, 200); // Check more frequently
+
+    // Prevent navigation away from block page
+    window.addEventListener('beforeunload', (e) => {
+      if (devtoolsDetectedRef.current) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    });
+
+    // Prevent back/forward navigation
+    history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', (e) => {
+      if (devtoolsDetectedRef.current) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        history.pushState(null, '', window.location.href);
       }
     });
 
     return () => {
       document.removeEventListener('contextmenu', handleRightClick);
       document.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('focus', runImmediateChecks);
+      document.removeEventListener('selectstart', handleSelectStart);
+      window.removeEventListener('resize', detectDevTools);
       clearInterval(checkInterval);
     };
-  }, [isMobile]);
+  }, [isMobile, blocked]);
+
+  // If blocked, render nothing (already handled by DOM manipulation)
+  if (blocked) {
+    return null;
+  }
 
   return <>{children}</>;
 };
