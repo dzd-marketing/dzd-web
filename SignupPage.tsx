@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Mail,
   Lock,
@@ -12,7 +12,8 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle,
-  Info
+  Info,
+  Shield
 } from "lucide-react";
 import {
   createUserWithEmailAndPassword,
@@ -23,6 +24,7 @@ import {
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import { useNavigate } from "react-router-dom";
+import Turnstile from 'react-turnstile';
 
 // Custom Toast Component with fixed mobile alignment
 const Toast = ({ message, type, onClose }: { 
@@ -93,8 +95,14 @@ export default function SignupPage({
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaError, setCaptchaError] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const turnstileRef = useRef(null);
   const navigate = useNavigate();
+
+  // Get site key from environment variables
+  const siteKey = import.meta.env.VITE_CLOUDFLARE_TURNSTILE_SITE_KEY;
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -141,6 +149,24 @@ export default function SignupPage({
     }
   };
 
+  const verifyCaptcha = async (token: string) => {
+    try {
+      const response = await fetch('/api/verify-captcha', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token }),
+      });
+      
+      const data = await response.json();
+      return data.success;
+    } catch (error) {
+      console.error('Captcha verification failed:', error);
+      return false;
+    }
+  };
+
   const handleAuthSuccess = async () => {
     try {
       await signOut(auth);
@@ -168,6 +194,13 @@ export default function SignupPage({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate captcha first
+    if (!captchaToken) {
+      showToast('Please complete the security check', 'error');
+      setCaptchaError(true);
+      return;
+    }
+    
     // Custom form validations
     if (password !== confirmPassword) {
       showToast('Passwords do not match! Please check and try again.', 'error');
@@ -190,7 +223,18 @@ export default function SignupPage({
     }
 
     setLoading(true);
+    
     try {
+      // Verify captcha with backend
+      const isValidCaptcha = await verifyCaptcha(captchaToken);
+      
+      if (!isValidCaptcha) {
+        showToast('Security check failed. Please try again.', 'error');
+        setCaptchaToken(null);
+        setLoading(false);
+        return;
+      }
+
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const userData = { 
         fullName, 
@@ -205,13 +249,32 @@ export default function SignupPage({
       const errorMessage = getFirebaseErrorMessage(error.code);
       showToast(errorMessage, 'error');
       setLoading(false);
+      setCaptchaToken(null); // Reset captcha on error
     }
   };
 
   const handleGoogleSignup = async () => {
+    // Validate captcha first
+    if (!captchaToken) {
+      showToast('Please complete the security check', 'error');
+      setCaptchaError(true);
+      return;
+    }
+
     setLoading(true);
-    const provider = new GoogleAuthProvider();
+    
     try {
+      // Verify captcha with backend
+      const isValidCaptcha = await verifyCaptcha(captchaToken);
+      
+      if (!isValidCaptcha) {
+        showToast('Security check failed. Please try again.', 'error');
+        setCaptchaToken(null);
+        setLoading(false);
+        return;
+      }
+
+      const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const userData = { 
         fullName: result.user.displayName || '', 
@@ -232,7 +295,22 @@ export default function SignupPage({
       const errorMessage = getFirebaseErrorMessage(error.code);
       showToast(errorMessage, 'error');
       setLoading(false);
+      setCaptchaToken(null); // Reset captcha on error
     }
+  };
+
+  const onCaptchaVerify = (token: string) => {
+    setCaptchaToken(token);
+    setCaptchaError(false);
+  };
+
+  const onCaptchaExpire = () => {
+    setCaptchaToken(null);
+  };
+
+  const onCaptchaError = () => {
+    setCaptchaError(true);
+    showToast('Security check failed. Please try again.', 'error');
   };
 
   return (
@@ -246,11 +324,33 @@ export default function SignupPage({
         />
       )}
 
-<div className="fixed inset-0 z-[150] flex items-start lg:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
-  {/* Background Overlay Click to Close */}
-  <div className="fixed inset-0 cursor-pointer" onClick={onClose} />
+      {/* Add animation styles */}
+      <style>{`
+        @keyframes slide-in {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-5px); }
+          75% { transform: translateX(5px); }
+        }
+        .animate-slide-in {
+          animation: slide-in 0.3s ease-out;
+        }
+      `}</style>
 
-  <div className="relative w-full sm:w-auto sm:max-w-5xl bg-white sm:rounded-[2.5rem] shadow-2xl overflow-y-auto sm:overflow-hidden animate-scale-in my-0 sm:my-8">
+      <div className="fixed inset-0 z-[150] flex items-start lg:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
+        {/* Background Overlay Click to Close */}
+        <div className="fixed inset-0 cursor-pointer" onClick={onClose} />
+
+        <div className="relative w-full sm:w-auto sm:max-w-5xl bg-white sm:rounded-[2.5rem] shadow-2xl overflow-y-auto sm:overflow-hidden animate-scale-in my-0 sm:my-8">
           {/* Desktop Close Button */}
           <button 
             onClick={onClose} 
@@ -297,26 +397,26 @@ export default function SignupPage({
             </div>
 
             {/* Form Side */}
-<div className="w-full lg:w-7/12 flex items-start lg:items-center justify-center p-6 sm:p-8 lg:p-16 min-h-screen lg:min-h-0 overflow-y-auto">
-  <div className="w-full max-w-md mx-auto py-8 lg:py-0">
-    {/* Mobile Header Branding */}
-    <div className="lg:hidden flex items-center gap-2 mb-8 justify-center">
-      <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-md">
-        <Zap size={20} fill="white" />
-      </div>
-      <span className="text-lg font-bold text-slate-900 uppercase tracking-tight">
-        DzD <span className="text-blue-600">Marketing</span>
-      </span>
-    </div>
-    
-    <div className="mb-8 text-center lg:text-left">
-      <h2 className="text-3xl lg:text-4xl font-black text-slate-900 mb-2 tracking-tighter">
-        Create Account
-      </h2>
-      <p className="text-slate-400 font-bold text-[11px] uppercase tracking-[0.2em]">
-        Join the elite marketing ecosystem
-      </p>
-    </div>
+            <div className="w-full lg:w-7/12 flex items-start lg:items-center justify-center p-6 sm:p-8 lg:p-16 min-h-screen lg:min-h-0 overflow-y-auto">
+              <div className="w-full max-w-md mx-auto py-8 lg:py-0">
+                {/* Mobile Header Branding */}
+                <div className="lg:hidden flex items-center gap-2 mb-8 justify-center">
+                  <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-md">
+                    <Zap size={20} fill="white" />
+                  </div>
+                  <span className="text-lg font-bold text-slate-900 uppercase tracking-tight">
+                    DzD <span className="text-blue-600">Marketing</span>
+                  </span>
+                </div>
+                
+                <div className="mb-8 text-center lg:text-left">
+                  <h2 className="text-3xl lg:text-4xl font-black text-slate-900 mb-2 tracking-tighter">
+                    Create Account
+                  </h2>
+                  <p className="text-slate-400 font-bold text-[11px] uppercase tracking-[0.2em]">
+                    Join the elite marketing ecosystem
+                  </p>
+                </div>
                 
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -422,6 +522,27 @@ export default function SignupPage({
                     </div>
                   </div>
 
+                  {/* Cloudflare Turnstile CAPTCHA */}
+                  <div className="flex justify-center my-2">
+                    <div 
+                      style={captchaError ? {
+                        border: '2px solid #ef4444',
+                        borderRadius: '8px',
+                        animation: 'shake 0.5s ease-in-out'
+                      } : {}}
+                    >
+                      <Turnstile
+                        ref={turnstileRef}
+                        sitekey={siteKey}
+                        onVerify={onCaptchaVerify}
+                        onExpire={onCaptchaExpire}
+                        onError={onCaptchaError}
+                        theme="light"
+                        className="scale-90 sm:scale-100"
+                      />
+                    </div>
+                  </div>
+
                   <div className="flex items-center gap-3 py-2 cursor-pointer select-none" onClick={() => setAgreed(!agreed)}>
                     <div className={`w-5 h-5 shrink-0 rounded-md border flex items-center justify-center transition-all ${
                       agreed ? 'bg-blue-600 border-blue-600' : 'border-slate-300 bg-white hover:border-blue-400'
@@ -442,6 +563,7 @@ export default function SignupPage({
                       <Loader2 className="w-5 h-5 animate-spin" />
                     ) : (
                       <>
+                        <Shield size={16} />
                         Create Account
                         <ArrowRight size={16} />
                       </>
@@ -522,24 +644,6 @@ export default function SignupPage({
           </div>
         )}
       </div>
-
-      {/* Add animation styles */}
-      {/* Add animation styles */}
-      <style>{`
-        @keyframes slide-in {
-          from {
-            transform: translateX(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
-        .animate-slide-in {
-          animation: slide-in 0.3s ease-out;
-        }
-      `}</style>
     </>
   );
 }
