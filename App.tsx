@@ -71,7 +71,7 @@ const LoadingSpinner = () => {
   );
 };
 
-// Anti-DevTools Component - Desktop Only, Silent Blocking
+// Anti-DevTools Component - Desktop Only, Silent Blocking with Immediate Detection
 const AntiDevTools = ({ children }: { children: React.ReactNode }) => {
   const [isMobile, setIsMobile] = useState(false);
   const devtoolsDetectedRef = React.useRef(false);
@@ -90,10 +90,105 @@ const AntiDevTools = ({ children }: { children: React.ReactNode }) => {
     const redirectToPreview = () => {
       if (!devtoolsDetectedRef.current && !isMobile) {
         devtoolsDetectedRef.current = true;
-        // Redirect to your preview image URL
-        window.location.href = 'https://www.dzd-marketing.site/dzd-preview.png';
+        // Use window.location.replace for immediate redirect (doesn't add to history)
+        window.location.replace('https://www.dzd-marketing.site/dzd-preview.png');
       }
     };
+
+    // IMMEDIATE DETECTION METHODS
+
+    // Method 1: Check window dimensions (devtools open on side)
+    const checkDimensions = () => {
+      if (isMobile || devtoolsDetectedRef.current) return false;
+      
+      const widthThreshold = window.outerWidth - window.innerWidth > 160;
+      const heightThreshold = window.outerHeight - window.innerHeight > 160;
+      
+      if (widthThreshold || heightThreshold) {
+        redirectToPreview();
+        return true;
+      }
+      return false;
+    };
+
+    // Method 2: Debugger detection (most reliable)
+    const checkDebugger = () => {
+      if (isMobile || devtoolsDetectedRef.current) return false;
+      
+      const start = performance.now();
+      debugger;
+      const end = performance.now();
+      
+      if (end - start > 100) {
+        redirectToPreview();
+        return true;
+      }
+      return false;
+    };
+
+    // Method 3: Check for console (if devtools is open, console might be accessible)
+    const checkConsole = () => {
+      if (isMobile || devtoolsDetectedRef.current) return false;
+      
+      try {
+        // Check if console is open by testing a property that only exists when devtools is open
+        if (console && (console as any).profiles) {
+          redirectToPreview();
+          return true;
+        }
+      } catch (e) {
+        // Ignore errors
+      }
+      return false;
+    };
+
+    // Method 4: Date.toString() detection
+    const checkDateToString = () => {
+      if (isMobile || devtoolsDetectedRef.current) return false;
+      
+      const element = document.createElement('div');
+      Object.defineProperty(element, 'id', {
+        get: function() {
+          redirectToPreview();
+          return '';
+        }
+      });
+      
+      // This will trigger the getter if devtools is open
+      console.log(element);
+    };
+
+    // Method 5: Performance timing check (alternative debugger method)
+    const checkPerformance = () => {
+      if (isMobile || devtoolsDetectedRef.current) return false;
+      
+      const startTime = performance.now();
+      (function() { return false; }['constructor']('debugger')());
+      const endTime = performance.now();
+      
+      if (endTime - startTime > 100) {
+        redirectToPreview();
+        return true;
+      }
+      return false;
+    };
+
+    // Run all checks immediately
+    const runImmediateChecks = () => {
+      // Run checks in sequence
+      checkDimensions();
+      checkDebugger();
+      checkConsole();
+      checkPerformance();
+      
+      // This one is async, so we call it separately
+      setTimeout(() => {
+        checkDateToString();
+      }, 0);
+    };
+
+    // Run checks immediately when component mounts
+    runImmediateChecks();
 
     // Silent right-click prevention (no messages)
     const handleRightClick = (e: MouseEvent) => {
@@ -106,7 +201,7 @@ const AntiDevTools = ({ children }: { children: React.ReactNode }) => {
 
     // Handle keyboard shortcuts for devtools
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (isMobile) return; // Skip on mobile
+      if (isMobile || devtoolsDetectedRef.current) return; // Skip if already detected
 
       // Check for devtools shortcuts
       const isDevToolsShortcut = 
@@ -122,44 +217,32 @@ const AntiDevTools = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
-    // Detect devtools via debugger (silent)
-    const detectDevTools = () => {
-      if (isMobile || devtoolsDetectedRef.current) return;
-
-      const start = performance.now();
-      debugger;
-      const end = performance.now();
+    // Periodic checks for devtools that might be opened after page load
+    const checkInterval = setInterval(() => {
+      if (devtoolsDetectedRef.current) return;
       
-      if (end - start > 100) {
-        redirectToPreview();
-      }
-    };
+      // Re-run checks
+      checkDimensions();
+      checkDebugger();
+      checkConsole();
+      checkPerformance();
+    }, 1000);
 
-    // Detect devtools via window size changes (silent)
-    const detectDevToolsBySize = () => {
-      if (isMobile || devtoolsDetectedRef.current) return;
-
-      const widthThreshold = window.outerWidth - window.innerWidth > 160;
-      const heightThreshold = window.outerHeight - window.innerHeight > 160;
-      
-      if (widthThreshold || heightThreshold) {
-        redirectToPreview();
-      }
-    };
-
-    // Add event listeners (silent blocking)
+    // Add event listeners
     document.addEventListener('contextmenu', handleRightClick);
     document.addEventListener('keydown', handleKeyDown);
     
-    // Check for devtools periodically
-    const checkInterval = setInterval(() => {
-      detectDevTools();
-      detectDevToolsBySize();
-    }, 1000);
+    // Also check when window gains focus (user might have opened devtools in another tab)
+    window.addEventListener('focus', () => {
+      if (!devtoolsDetectedRef.current) {
+        runImmediateChecks();
+      }
+    });
 
     return () => {
       document.removeEventListener('contextmenu', handleRightClick);
       document.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('focus', runImmediateChecks);
       clearInterval(checkInterval);
     };
   }, [isMobile]);
