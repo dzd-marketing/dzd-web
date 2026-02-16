@@ -138,7 +138,7 @@ export default function Footer({ onSignupClick }: { onSignupClick?: () => void }
               </li>
               <li>
                 <button 
-                  onClick={handleCreateAccount}
+                  onClick={handleServicesPage}
                   className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors"
                 >
                   Services
