@@ -664,8 +664,6 @@ const team = [
         </div>
       </section>
 
-      {/* Footer */}
-      <Footer />
     </div>
   );
 }
