@@ -186,6 +186,40 @@ export default function App() {
   const AppContent = () => {
     const navigationLoading = useNavigationLoader(500);
 
+      useEffect(() => {
+    let trapImage: HTMLImageElement | null = null;
+
+    const checkDevTools = () => {
+      const widthThreshold = window.outerWidth - window.innerWidth > 160;
+      const heightThreshold = window.outerHeight - window.innerHeight > 160;
+      const devToolsOpen = widthThreshold || heightThreshold;
+
+      if (devToolsOpen) {
+        if (!trapImage) {
+          trapImage = document.createElement('img');
+          trapImage.src = '/dzd-preview.png'; // put your image in /public folder
+          trapImage.style.position = 'fixed';
+          trapImage.style.top = '0';
+          trapImage.style.left = '0';
+          trapImage.style.width = '100vw';
+          trapImage.style.height = '100vh';
+          trapImage.style.zIndex = '9999';
+          trapImage.style.pointerEvents = 'none';
+          document.body.appendChild(trapImage);
+        }
+      } else {
+        if (trapImage) {
+          trapImage.remove(); // remove image only if dev tools is closed
+          trapImage = null;
+        }
+      }
+    };
+
+    const interval = setInterval(checkDevTools, 500);
+
+    return () => clearInterval(interval);
+  }, []);
+
     return (
       <>
         <ScrollToTop />
