@@ -223,7 +223,8 @@ export default function App() {
           </main>
 
           <AIChatWidget />
-          <Footer onSignupClick={openSignup}/>
+          <Footer user={user} onSignupClick={openSignup} />
+
 
           {showLogin && (
             <LoginPage onLogin={handleAuth} onClose={closeModals} onSwitchToSignup={openSignup} />
