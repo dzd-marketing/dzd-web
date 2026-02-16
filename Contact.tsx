@@ -397,8 +397,6 @@ export default function ContactPage({ onSignupClick }: { onSignupClick?: () => v
         </div>
       </section>
 
-      {/* ========== FOOTER ========== */}
-      <Footer />
     </div>
   );
 }
