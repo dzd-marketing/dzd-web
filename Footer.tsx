@@ -20,7 +20,14 @@ const WhatsAppIcon = MessageCircle;
 const InstagramIcon = Instagram;
 const YoutubeIcon = Youtube;
 
-export default function Footer({ onSignupClick }: { onSignupClick?: () => void }) {
+export default function Footer({
+  user,
+  onSignupClick
+}: {
+  user: any;
+  onSignupClick?: () => void;
+})
+
   const navigate = useNavigate();
 
   
