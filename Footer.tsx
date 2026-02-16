@@ -11,12 +11,12 @@ import {
   Twitter,
   Instagram,
   Youtube,
-  message-circle
+  MessageCircle
 } from 'lucide-react';
 
 // Social Icons (using Lucide React icons)
 const FacebookIcon = Facebook;
-const WhatsAppIcon = message-circle;
+const WhatsAppIcon = MessageCircle;
 const InstagramIcon = Instagram;
 const YoutubeIcon = Youtube;
 
