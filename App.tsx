@@ -202,7 +202,6 @@ export default function App() {
             onSignupClick={openSignup}
           />
 
-          <Footer onSignupClick={openSignup}/>
 
           <main className={`selection-blue transition-all duration-300 ${(showLogin || showSignup) ? 'blur-[8px] scale-[0.99] opacity-50 pointer-events-none' : ''}`}>
             <Routes>
@@ -224,6 +223,7 @@ export default function App() {
           </main>
 
           <AIChatWidget />
+          <Footer onSignupClick={openSignup}/>
 
           {showLogin && (
             <LoginPage onLogin={handleAuth} onClose={closeModals} onSwitchToSignup={openSignup} />
