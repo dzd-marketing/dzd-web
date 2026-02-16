@@ -444,8 +444,6 @@ export default function SupporView({ onSignupClick }: { onSignupClick?: () => vo
         </RevealSection>
       </section>
 
-      {/* ========== FOOTER ========== */}
-      <Footer />
     </div>
   );
 }
