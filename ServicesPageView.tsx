@@ -316,7 +316,7 @@ const scrollToTop = () => {
                         <Globe size={10} /> {service.category}
                       </p>
                     </td>
-                    <td className="px-8 py-6 font-black text-slate-900 dark:text-white text-base">${service.rate}</td>
+                    <td className="px-8 py-6 font-black text-slate-900 dark:text-white text-base">LKR {service.rate}</td>
                     <td className="px-8 py-6">
                       <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter bg-slate-100 dark:bg-white/5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10">
                         {service.min.toLocaleString()} - {service.max.toLocaleString()}
@@ -366,7 +366,7 @@ const scrollToTop = () => {
               <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-white/5">
                  <div>
                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Rate / 1k</p>
-                    <p className="text-lg font-black text-slate-900 dark:text-white tracking-tighter">${service.rate}</p>
+                    <p className="text-lg font-black text-slate-900 dark:text-white tracking-tighter">LKR {service.rate}</p>
                  </div>
                  <div className="text-right">
                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Payload range</p>
