@@ -119,7 +119,7 @@ export default function Footer() {
               </li>
               <li>
                 <button 
-                  onClick={() => handleNavigation('/pricing')} 
+                  onClick={() => handleNavigation('/dashboard/services')} 
                   className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors"
                 >
                   Pricing
