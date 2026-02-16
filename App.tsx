@@ -20,6 +20,7 @@ import TermsofServicePage from './TermsofService';
 import AboutUsPage from './AboutUs';
 import AIChatWidget from './AiChatWidget';
 import PricingPage from './PricingPage';
+import Footer from './Footer';
 
 // Loading Spinner Component with inline styles
 const LoadingSpinner = () => {
@@ -200,6 +201,8 @@ export default function App() {
             onLoginClick={openLogin}
             onSignupClick={openSignup}
           />
+
+          <Footer onSignupClick={openSignup}/>
 
           <main className={`selection-blue transition-all duration-300 ${(showLogin || showSignup) ? 'blur-[8px] scale-[0.99] opacity-50 pointer-events-none' : ''}`}>
             <Routes>
