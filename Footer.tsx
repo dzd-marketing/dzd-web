@@ -10,20 +10,47 @@ import {
   Facebook,
   Twitter,
   Instagram,
-  Youtube
+  Youtube,
+  Whatsapp
 } from 'lucide-react';
 
 // Social Icons (using Lucide React icons)
 const FacebookIcon = Facebook;
-const TwitterIcon = Twitter;
+const WhatsAppIcon = WhatsApp;
 const InstagramIcon = Instagram;
 const YoutubeIcon = Youtube;
 
-export default function Footer() {
+export default function Footer({ onSignupClick }: { onSignupClick?: () => void }) {
   const navigate = useNavigate();
+
+  
 
   const handleNavigation = (path: string) => {
     navigate(path);
+  };
+
+    const handleServicesPage = () => {
+    if (user) {
+      navigate('/dashboard/services');
+    } else {
+      onSignupClick?.();
+    }
+  };
+
+      const handleDashboardHome = () => {
+    if (user) {
+      navigate('/dashboard/home');
+    } else {
+      onSignupClick?.();
+    }
+  };
+
+        const handleTicketsPage = () => {
+    if (user) {
+      navigate('/dashboard/tickets');
+    } else {
+      onSignupClick?.();
+    }
   };
 
   return (
@@ -57,7 +84,7 @@ export default function Footer() {
             {/* Social Links */}
             <div className="flex items-center gap-3">
               <a 
-                href="https://facebook.com" 
+                href="https://www.facebook.com/share/18cBXTmeXN/?mibextid=wwXIfr" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-blue-600 hover:text-white transition-all"
@@ -65,15 +92,15 @@ export default function Footer() {
                 <FacebookIcon size={16} className="lg:w-[18px] lg:h-[18px]" />
               </a>
               <a 
-                href="https://twitter.com" 
+                href="https://whatsapp.com/channel/0029VbBSLK7CRs1j1WRhuv1w" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-blue-600 hover:text-white transition-all"
               >
-                <TwitterIcon size={16} className="lg:w-[18px] lg:h-[18px]" />
+                <WhatsAppIcon size={16} className="lg:w-[18px] lg:h-[18px]" />
               </a>
               <a 
-                href="https://instagram.com" 
+                href="https://www.instagram.com/a4.diil" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-blue-600 hover:text-white transition-all"
@@ -81,7 +108,7 @@ export default function Footer() {
                 <InstagramIcon size={16} className="lg:w-[18px] lg:h-[18px]" />
               </a>
               <a 
-                href="https://youtube.com" 
+                href="https://www.youtube.com/@quizontal" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-blue-600 hover:text-white transition-all"
@@ -111,7 +138,7 @@ export default function Footer() {
               </li>
               <li>
                 <button 
-                  onClick={() => handleNavigation('/dashboard/services')} 
+                  onClick={handleCreateAccount}
                   className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors"
                 >
                   Services
@@ -119,15 +146,15 @@ export default function Footer() {
               </li>
               <li>
                 <button 
-                  onClick={() => handleNavigation('/dashboard/services')} 
+                  onClick={handleTicketsPage}  
                   className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors"
                 >
-                  Pricing
+                  Tickets
                 </button>
               </li>
               <li>
                 <button 
-                  onClick={() => handleNavigation('/dashboard')} 
+                  onClick={handleDashboardHome} 
                   className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors"
                 >
                   Dashboard
@@ -197,7 +224,7 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
                 <Phone size={16} className="flex-shrink-0" />
-                <span className="text-sm lg:text-base">+1 (800) 123-4567</span>
+                <span className="text-sm lg:text-base">+94 77 612 1326</span>
               </div>
               <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
                 <MapPin size={16} className="flex-shrink-0" />
