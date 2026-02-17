@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Wallet, History, Mail, Zap, ListOrderedIcon, Loader } from 'lucide-react';
 import { auth, db } from './firebase';
-import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
+import { getUserOrders } from './firebase'; // 👈 IMPORT THE SAME FUNCTION
 
 const WORKER_URL = import.meta.env.VITE_WORKER_URL;
 
@@ -41,23 +42,28 @@ export default function DashboardHomeView({ user, setActiveTab }: any) {
     }
   };
 
-  // Fetch orders from Firestore
+  // ============================================
+  // FIXED: Use the same getUserOrders function as orders page
+  // ============================================
   const fetchOrders = async (uid: string) => {
     setLoading(prev => ({ ...prev, orders: true }));
     try {
-      const ordersRef = collection(db, 'users', uid, 'orders');
+      // 👇 USE THE SAME FUNCTION AS ORDERS PAGE
+      const userOrders = await getUserOrders(uid);
       
-      // Get total count and stats
-      const countQuery = query(ordersRef);
-      const countSnapshot = await getDocs(countQuery);
+      // Sort by date (newest first)
+      const sortedOrders = userOrders.sort((a: any, b: any) => {
+        const dateA = a.date ? new Date(a.date).getTime() : 0;
+        const dateB = b.date ? new Date(b.date).getTime() : 0;
+        return dateB - dateA;
+      });
       
-      let totalCount = 0;
+      // Calculate stats
+      let totalCount = sortedOrders.length;
       let activeCount = 0;
       let completedCount = 0;
 
-      countSnapshot.forEach(doc => {
-        totalCount++;
-        const order = doc.data();
+      sortedOrders.forEach((order: any) => {
         const status = order.status?.toLowerCase() || '';
         
         if (status.includes('completed') || status.includes('success')) {
@@ -67,27 +73,19 @@ export default function DashboardHomeView({ user, setActiveTab }: any) {
         }
       });
 
-      // Get recent orders for display
-      const recentQuery = query(
-        ordersRef,
-        orderBy('date', 'desc'),
-        limit(5)
-      );
-      const recentSnapshot = await getDocs(recentQuery);
-      
-      const orders: any[] = [];
-      recentSnapshot.forEach(doc => {
-        orders.push({ id: doc.id, ...doc.data() });
-      });
+      // Get recent orders (first 5)
+      const recent = sortedOrders.slice(0, 5);
 
       setOrderStats({
         total: totalCount,
         active: activeCount,
         completed: completedCount,
-        recentCount: orders.length
+        recentCount: recent.length
       });
 
-      setRecentOrders(orders);
+      setRecentOrders(recent);
+      
+      console.log("Dashboard orders loaded:", totalCount, "orders");
     } catch (error) {
       console.error("Error fetching orders:", error);
     } finally {
