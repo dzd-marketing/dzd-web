@@ -301,51 +301,51 @@ export default function DashboardHomeView({ user, setActiveTab }: any) {
             </button>
           </div>
 
-          {recentOrders.length > 0 ? (
-            <div className="space-y-3 sm:space-y-4">
-              {recentOrders.map((order, i) => {
-                const statusBadge = getStatusColor(order.status);
-                return (
-                  <div 
-                    key={order.id || i} 
-                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-white/5 group hover:bg-white dark:hover:bg-blue-600/5 transition-all gap-3 sm:gap-0"
-                  >
-                    <div className="flex items-start sm:items-center gap-3 sm:gap-4">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform shadow-sm border border-slate-100 dark:border-white/5 flex-shrink-0">
-                        <Zap size={16} className="sm:w-5 sm:h-5" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate max-w-[200px] sm:max-w-none">
-                          {order.serviceName || `Order #${order.orderId}`}
-                        </p>
-                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-1">
-                          <span className="text-[8px] sm:text-[9px] font-black text-slate-400">
-                            #{order.orderId}
-                          </span>
-                          <span className="text-[8px] sm:text-[9px] font-black text-slate-400">•</span>
-                          <span className="text-[8px] sm:text-[9px] font-black text-slate-400">
-                            {order.quantity?.toLocaleString()} qty
-                          </span>
-                          <span className="text-[8px] sm:text-[9px] font-black text-slate-400">•</span>
-                          <span className="text-[8px] sm:text-[9px] font-black text-slate-400">
-                            {formatDate(order.date)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 pl-13 sm:pl-0">
-                      <span className={`text-[8px] sm:text-[9px] font-black uppercase px-2 sm:px-3 py-1 sm:py-1.5 rounded-full ${statusBadge}`}>
-                        {order.status || 'Pending'}
-                      </span>
-                      <span className="font-black text-xs sm:text-sm text-slate-900 dark:text-white whitespace-nowrap">
-                        LKR {parseFloat(order.charge || 0).toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
+{recentOrders.length > 0 ? (
+  <div className="space-y-3 sm:space-y-4">
+    {recentOrders.map((order, i) => {
+      const statusBadge = getStatusColor(order.status);
+      return (
+        <div 
+          key={order.id || i} 
+          className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-white/5 group hover:bg-white dark:hover:bg-blue-600/5 transition-all gap-3 sm:gap-4"
+        >
+          <div className="flex items-start sm:items-center gap-3 sm:gap-4 flex-1 min-w-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform shadow-sm border border-slate-100 dark:border-white/5 flex-shrink-0">
+              <Zap size={16} className="sm:w-5 sm:h-5" />
             </div>
-          ) : (
+            <div className="min-w-0 flex-1">
+              <p className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate max-w-[200px] sm:max-w-[400px] lg:max-w-[600px]">
+                {order.serviceName || `Order #${order.orderId}`}
+              </p>
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-1">
+                <span className="text-[8px] sm:text-[9px] font-black text-slate-400">
+                  #{order.orderId}
+                </span>
+                <span className="text-[8px] sm:text-[9px] font-black text-slate-400">•</span>
+                <span className="text-[8px] sm:text-[9px] font-black text-slate-400">
+                  {order.quantity?.toLocaleString()} qty
+                </span>
+                <span className="text-[8px] sm:text-[9px] font-black text-slate-400">•</span>
+                <span className="text-[8px] sm:text-[9px] font-black text-slate-400">
+                  {formatDate(order.date)}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 sm:flex-shrink-0">
+            <span className={`text-[8px] sm:text-[9px] font-black uppercase px-2 sm:px-3 py-1 sm:py-1.5 rounded-full ${statusBadge}`}>
+              {order.status || 'Pending'}
+            </span>
+            <span className="font-black text-xs sm:text-sm text-slate-900 dark:text-white whitespace-nowrap">
+              LKR {parseFloat(order.charge || 0).toFixed(2)}
+            </span>
+          </div>
+        </div>
+      );
+    })}
+  </div>
+) : ( ... )}
             <div className="text-center py-12 sm:py-16">
               <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto bg-slate-100 dark:bg-slate-800/50 rounded-2xl sm:rounded-3xl flex items-center justify-center text-slate-400 mb-3 sm:mb-4">
                 <History size={24} className="sm:w-8 sm:h-8" />
