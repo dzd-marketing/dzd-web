@@ -40,7 +40,8 @@ import {
   Instagram as InstagramIcon,
   Facebook as FacebookIcon,
   Youtube as YoutubeIcon,
-  ChevronUp
+  ChevronUp,
+  MessageCircle  // 👈 added for WhatsApp
 } from 'lucide-react';
 import Footer from './Footer';
 import { auth } from './firebase';
@@ -95,8 +96,28 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
     { value: '99.9%', label: 'Uptime Status', icon: <ShieldCheck size={20} />, color: 'amber' }
   ];
 
-  // SERVICES DATA
+  // SERVICES DATA – WhatsApp added as first item
   const services = [
+    // 1. WhatsApp Card
+    { 
+      name: 'WhatsApp', 
+      icon: <MessageCircle size={24} />, 
+      color: 'from-green-500 to-green-600',
+      bgColor: 'bg-green-500/10',
+      textColor: 'text-green-500',
+      features: [
+        { label: 'Followers', value: '50-10K' },
+        { label: 'Reactions', value: '50-5K' },
+        { label: 'Views', value: '100-20K' },
+        { label: 'Shares', value: '50-5K' }
+      ],
+      rate: '$0.99',
+      per: '1k',
+      min: '50',
+      max: '10K',
+      popular: false
+    },
+    // 2. Instagram
     { 
       name: 'Instagram', 
       icon: <Instagram size={24} />, 
@@ -115,6 +136,7 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
       max: '50K',
       popular: true
     },
+    // 3. TikTok
     { 
       name: 'TikTok', 
       icon: <Music2 size={24} />, 
@@ -133,6 +155,7 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
       max: '100K',
       popular: false
     },
+    // 4. YouTube
     { 
       name: 'YouTube', 
       icon: <Youtube size={24} />, 
@@ -151,6 +174,7 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
       max: '25K',
       popular: true
     },
+    // 5. Facebook
     { 
       name: 'Facebook', 
       icon: <Facebook size={24} />, 
@@ -169,6 +193,7 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
       max: '100K',
       popular: false
     },
+    // 6. Twitter (X)
     { 
       name: 'Twitter (X)', 
       icon: <Twitter size={24} />, 
@@ -187,6 +212,7 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
       max: '50K',
       popular: false
     },
+    // 7. Telegram
     { 
       name: 'Telegram', 
       icon: <Send size={24} />, 
@@ -204,6 +230,7 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
       max: '200K',
       popular: false
     },
+    // 8. LinkedIn
     { 
       name: 'LinkedIn', 
       icon: <Linkedin size={24} />, 
@@ -221,6 +248,7 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
       max: '10K',
       popular: false
     },
+    // 9. Pinterest
     { 
       name: 'Pinterest', 
       icon: <Pin size={24} />, 
@@ -238,6 +266,7 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
       max: '25K',
       popular: false
     },
+    // 10. Spotify
     { 
       name: 'Spotify', 
       icon: <HeadphonesIcon size={24} />, 
@@ -416,6 +445,19 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
     }
   };
 
+  // 👇 NEW HANDLER for service card "VIEW RATES" button
+  const handleServiceClick = (serviceName: string) => {
+    if (!user) {
+      onSignupClick?.();
+      return;
+    }
+    if (serviceName === 'WhatsApp') {
+      navigate('/w-boost');
+    } else {
+      navigate('/services'); // or '/dashboard' – adjust as needed
+    }
+  };
+
   return (
     <div className="bg-slate-50 dark:bg-[#020617] min-h-screen selection:bg-blue-600/30">
       {/* ========== HERO SECTION ========== */}
@@ -454,7 +496,7 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
                     View Services <ArrowRight size={14} className="sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform" />
                   </button>
                   <button
-                    onClick={() => navigate('/support')}
+                    onClick={() => navigate('/dashboard/services')}
                     className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 sm:gap-3 hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
                   >
                     <HeadphonesIcon size={14} className="sm:w-4 sm:h-4" /> 24/7 Support
@@ -547,8 +589,7 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
         </div>
       </RevealSection>
 
-      {/* ========== TOP SERVICES SLIDER (FIXED) ========== */}
-      {/* Removed overflow-hidden to prevent clipping on hover */}
+      {/* ========== TOP SERVICES SLIDER ========== */}
       <section className="py-16 lg:py-24 bg-white dark:bg-[#020617] relative">
         <div className="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-slate-50 to-transparent dark:from-[#020617] dark:to-transparent"></div>
         
@@ -680,9 +721,9 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
                       </div>
                     </div>
                     
-                    {/* View Rates Button */}
+                    {/* 👇 VIEW RATES BUTTON now uses handleServiceClick */}
                     <button 
-                      onClick={handleViewRates}
+                      onClick={() => handleServiceClick(service.name)}
                       className="w-full mt-4 lg:mt-5 py-3 lg:py-3.5 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-white/5 dark:to-white/10 hover:from-blue-600 hover:to-blue-700 text-slate-700 dark:text-slate-300 hover:text-white rounded-xl lg:rounded-2xl text-[10px] lg:text-xs font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 group/btn border border-slate-200 dark:border-white/10 hover:border-transparent shadow-sm hover:shadow-lg"
                     >
                       <span>VIEW RATES</span>
