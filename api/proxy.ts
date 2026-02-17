@@ -1,8 +1,7 @@
-
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Add CORS headers to allow your frontend to communicate with this proxy
+  // CORS headers
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -11,39 +10,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
   );
 
-  // Handle preflight request
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
 
-  const { url } = req.query;
+  // Get the SMM API URL and key from server environment variables (not exposed to client)
+  const SMM_API_URL = process.env.SMM_API_URL;
+  const SMM_API_KEY = process.env.SMM_API_KEY;
 
-  if (!url) {
-    return res.status(400).json({ error: 'Missing target URL' });
+  if (!SMM_API_URL || !SMM_API_KEY) {
+    return res.status(500).json({ error: 'API configuration missing on server' });
   }
 
-  const targetUrl = decodeURIComponent(Array.isArray(url) ? url[0] : url);
-
   try {
+    const { action } = req.body;
+    
     const fetchOptions: RequestInit = {
-      method: req.method,
+      method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-      }
+      },
+      body: new URLSearchParams({
+        key: SMM_API_KEY, // Add API key from server env
+        action: action,
+        ...req.body // Pass through any other parameters
+      }).toString()
     };
 
-    // Forward the body if it's a POST request
-    if (req.method === 'POST' && req.body) {
-      // If req.body is already an object, convert to form-urlencoded string
-      const bodyParams = new URLSearchParams();
-      for (const key in req.body) {
-        bodyParams.append(key, req.body[key]);
-      }
-      fetchOptions.body = bodyParams.toString();
-    }
-
-    const response = await fetch(targetUrl, fetchOptions);
+    const response = await fetch(SMM_API_URL, fetchOptions);
     const contentType = response.headers.get('content-type');
     
     if (contentType && contentType.includes('application/json')) {
