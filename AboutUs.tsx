@@ -291,7 +291,7 @@ const team = [
     }
   },
   {
-    name: 'Aadil Mohomade',
+    name: 'Mohamed Aadil',
     role: 'Admin Team',
     image: 'authors/aadil-mohomade.jpg',
     social: { 
