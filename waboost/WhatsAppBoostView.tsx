@@ -1,46 +1,49 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  ChevronRight, 
   AlertCircle, 
   CheckCircle2, 
   Loader2,
   Heart,
   UserPlus,
-  ArrowLeft,
-  Wallet,
-  Zap
+  Zap,
+  SmilePlus,
+  X,
+  Target,
+  Hash
 } from 'lucide-react';
 
 const WORKER_URL = import.meta.env.VITE_WORKER_URL;
 
 interface WhatsAppBoostProps {
   user: any; 
-  onBack?: () => void;
   fetchBalance: (uid: string) => void; 
 }
 
 export default function WhatsAppBoostView({ 
   user, 
-  fetchBalance: syncAppBalance, 
-  onBack 
+  fetchBalance: syncAppBalance
 }: WhatsAppBoostProps) {
   
   const [totalBalance, setTotalBalance] = useState<string>("0.00");
-  const [loading, setLoading] = useState({
-    balance: false,
-    executing: false
-  });
-  
+  const [loading, setLoading] = useState({ balance: false, executing: false });
   const [link, setLink] = useState('');
   const [type, setType] = useState<'follow' | 'react'>('follow');
-  const [selectedEmoji, setSelectedEmoji] = useState("❤️"); // Default emoji
+  const [quantity, setQuantity] = useState<string>("50");
+  const [selectedEmojis, setSelectedEmojis] = useState<string[]>(["❤️"]);
+  const [isEmojiMenuOpen, setIsEmojiMenuOpen] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
 
-  const BOT_API_URL = "https://akash-01-3d86d272b644.herokuapp.com/api/boost";
-  const BOT_AUTH_KEY = "ZANTA_BOOST_KEY_99";
-  const availableEmojis = ["❤️", "🔥", "👍", "✨", "💙", "😂", "💯", "✅"];
-
+  const allEmojis = ["❤️", "💙", "💚", "💛", "🤍", "😂", "😃", "😍", "😪", "😒", "😡", "👍", "👎", "👊", "👌", "🙏", "🎉", "✨", "🎀", "🎭", "🌝", "🌚", "🌈", "⚡"];
   const cleanBaseUrl = WORKER_URL?.replace(/\/$/, "");
+
+  // Cost Calculation logic
+  const currentQty = parseInt(quantity) || 0;
+  let totalCost = 0;
+  if (type === 'follow') {
+    totalCost = (currentQty * 35) / 100;
+  } else {
+    totalCost = currentQty > 100 ? ((currentQty - 100) * 5) / 100 : 0;
+  }
 
   const refreshBalance = useCallback(async (uid: string) => {
     if (!uid || !cleanBaseUrl) return;
@@ -48,34 +51,31 @@ export default function WhatsAppBoostView({
     try {
       const response = await fetch(`${cleanBaseUrl}/get-balance?userId=${uid}`);
       const data = await response.json();
-      const currentBal = parseFloat(data.total_balance || 0).toFixed(2);
-      setTotalBalance(currentBal);
+      setTotalBalance(parseFloat(data.total_balance || 0).toFixed(2));
       syncAppBalance(uid);
-    } catch (error) {
-      console.error("Balance sync error:", error);
-    } finally {
-      setLoading(prev => ({ ...prev, balance: false }));
-    }
+    } catch (error) { console.error(error); } finally { setLoading(prev => ({ ...prev, balance: false })); }
   }, [cleanBaseUrl, syncAppBalance]);
 
   useEffect(() => {
     if (user?.uid) {
       refreshBalance(user.uid);
-      const interval = setInterval(() => refreshBalance(user.uid), 15000);
+      const interval = setInterval(() => refreshBalance(user.uid), 20000);
       return () => clearInterval(interval);
     }
   }, [user?.uid, refreshBalance]);
 
   const handleExecute = async () => {
+    // Basic Validations
     if (!link.includes('whatsapp.com/channel/')) {
-      setStatus({ type: 'error', msg: 'INVALID WHATSAPP LINK' });
+      setStatus({ type: 'error', msg: 'INVALID CHANNEL LINK' });
       return;
     }
-
-    const cost = type === 'follow' ? 35 : 5;
-    const currentBal = parseFloat(totalBalance);
-
-    if (currentBal < cost) {
+    const qtyNum = parseInt(quantity);
+    if (isNaN(qtyNum) || qtyNum < 10 || qtyNum > 150) {
+      setStatus({ type: 'error', msg: 'LIMIT: 10 - 150 ONLY' });
+      return;
+    }
+    if (parseFloat(totalBalance) < totalCost) {
       setStatus({ type: 'error', msg: 'INSUFFICIENT BALANCE' });
       return;
     }
@@ -84,172 +84,177 @@ export default function WhatsAppBoostView({
     setStatus(null);
 
     try {
-      // 1. මුලින්ම සල්ලි කපනවා (Database Update)
-      const deductRes = await fetch(`${cleanBaseUrl}/deduct-balance`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user.uid,
-          amount: cost,
-          description: `WA ${type} Boost: ${selectedEmoji}`
-        })
-      });
-
-      const deductData = await deductRes.json();
-
-      if (!deductRes.ok || !deductData.success) {
-        throw new Error(deductData.error || "TRANSACTION FAILED");
+      // 1. Deduct Balance
+      if (totalCost > 0) {
+        const payRes = await fetch(`${cleanBaseUrl}/deduct-balance`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: user.uid, amount: totalCost, description: `WA ${type} Boost` })
+        });
+        if (!payRes.ok) throw new Error("Payment Failed");
       }
 
-      // සල්ලි කැපුන ගමන් Balance එක UI එකේ update කරනවා
-      setTotalBalance(parseFloat(deductData.newBalance).toFixed(2));
-      syncAppBalance(user.uid);
+      // 2. Build the Multi-Node Payload
+      // Schema එකට ගැළපෙන විදියට Object එක හදනවා
+      const signalPayload: any = {
+        type: type,
+        targetJid: link.trim(),
+        emojiList: type === 'react' ? selectedEmojis : [],
+        timestamp: Date.now()
+      };
 
-      // 2. සල්ලි කැපීම සාර්ථක නම් විතරක් Bot එකට Signal එක යවනවා
-      const botRes = await fetch(BOT_API_URL, {
+      const USERS_PER_APP = 50;
+      let remaining = qtyNum + 10; // Adding 10 buffer users
+      let appIdCounter = 1;
+
+      // Quantity එක 50 බැගින් බෙදා වෙන් කර APP_ID_X ලෙස Payload එකට එකතු කරනවා
+      while (remaining > 0) {
+        const batchSize = Math.min(remaining, USERS_PER_APP);
+        const keyName = `APP_ID_${appIdCounter}`;
+        signalPayload[keyName] = batchSize.toString(); 
+        
+        remaining -= batchSize;
+        appIdCounter++;
+      }
+
+      // 3. Send to API (MongoDB එකේ strict: false නිසා මේ fields ඔක්කොම save වෙයි)
+      const signalRes = await fetch('/api/send-signal', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key: BOT_AUTH_KEY,
-          type: type,
-          link: link.trim(),
-          emojis: type === 'react' ? [selectedEmoji] : ["✅"] // Reaction එකක් නම් තෝරපු emoji එක යවනවා
-        })
+        body: JSON.stringify(signalPayload)
       });
 
-      const botData = await botRes.json();
-
-      if (botRes.ok && botData.success) {
-        setStatus({ type: 'success', msg: 'STRIKE DEPLOYED SUCCESSFULLY!' });
-        setLink(''); 
+      if (signalRes.ok) {
+        setStatus({ type: 'success', msg: `STRIKE INITIATED: ${appIdCounter - 1} NODES ACTIVE` });
+        setLink('');
+        refreshBalance(user.uid);
       } else {
-        setStatus({ type: 'error', msg: 'SIGNAL DELAYED. CREDITS DEDUCTED. CONTACT SUPPORT.' });
+        throw new Error("Signal Failed");
       }
-
-    } catch (err: any) {
-      setStatus({ type: 'error', msg: err.message || "SYSTEM ERROR" });
+    } catch (err) {
+      setStatus({ type: 'error', msg: "PROTOCOL SYNC ERROR" });
     } finally {
       setLoading(prev => ({ ...prev, executing: false }));
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] pt-20 pb-12 px-4">
-      <div className="max-w-xl mx-auto">
-        
-        {/* Top Header */}
-        <div className="flex items-center justify-between mb-6">
-          <button onClick={onBack} className="p-3 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-400 hover:scale-105 transition-all">
-            <ArrowLeft size={20} />
-          </button>
-          <div className="text-right">
-            <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-emerald-500 italic tracking-tighter uppercase">ZANTA STRIKE</h1>
-            <p className="text-[9px] font-bold text-slate-400 tracking-[0.3em] uppercase">WhatsApp Automation V2</p>
-          </div>
+    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] pt-24 pb-10 px-4">
+      <div className="max-w-md mx-auto">
+        <div className="text-center mb-8">
+            <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400 italic tracking-tighter uppercase leading-none">DzD WA BOOST</h1>
+            <p className="text-[8px] font-bold text-slate-400 tracking-[0.3em] uppercase mt-1">Multi-Node Distribution Logic</p>
         </div>
 
-        <div className="bg-white dark:bg-[#0f172a]/60 rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-2xl overflow-hidden backdrop-blur-xl">
-          
-          {/* Balance Card - Now with Gradient */}
+        <div className="bg-white dark:bg-[#0f172a]/80 rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-2xl overflow-hidden backdrop-blur-xl">
           <div className="p-1">
-            <div className="px-8 py-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-[2.3rem] text-white shadow-xl relative overflow-hidden">
-               <Zap className="absolute right-[-10px] top-[-10px] w-32 h-32 opacity-10 rotate-12" />
-               <div className="relative z-10 flex justify-between items-end">
+            <div className="px-6 py-6 bg-gradient-to-br from-blue-600 to-blue-900 rounded-[2.3rem] text-white relative overflow-hidden">
+               <Zap className="absolute right-[-5px] top-[-5px] w-24 h-24 opacity-10 rotate-12" />
+               <div className="relative z-10 flex justify-between items-center">
                  <div>
-                   <p className="text-blue-100 text-[10px] font-black uppercase tracking-widest mb-1">Available Credits</p>
-                   <h3 className="text-3xl font-black tracking-tight tabular-nums">LKR {totalBalance}</h3>
+                   <p className="text-blue-100 text-[9px] font-black uppercase tracking-widest opacity-80">Credits Available</p>
+                   <h3 className="text-2xl font-black tabular-nums tracking-tight">LKR {totalBalance}</h3>
                  </div>
-                 <div className="bg-white/20 backdrop-blur-md px-4 py-2 rounded-xl border border-white/20">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${loading.balance ? 'bg-yellow-400 animate-pulse' : 'bg-emerald-400'}`} />
-                      <span className="text-[10px] font-black uppercase tracking-tighter">{loading.balance ? 'Syncing' : 'Verified'}</span>
-                    </div>
+                 <div className="bg-black/20 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
+                    <span className="text-[9px] font-black uppercase tracking-tighter">{loading.balance ? 'Updating...' : 'Verified'}</span>
                  </div>
                </div>
             </div>
           </div>
 
-          <div className="p-8 space-y-8">
-            {/* Service Type */}
-            <div className="space-y-4">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Choose_Operation</label>
-              <div className="grid grid-cols-2 gap-4">
-                <button onClick={() => setType('follow')} className={`p-5 rounded-3xl border-2 transition-all ${type === 'follow' ? 'border-emerald-500 bg-emerald-500/5' : 'border-slate-100 dark:border-white/5 opacity-40 grayscale'}`}>
-                  <UserPlus className={`mb-2 ${type === 'follow' ? 'text-emerald-500' : ''}`} size={24} />
-                  <p className="font-black text-sm dark:text-white">Followers</p>
-                  <p className="text-[10px] font-bold text-emerald-500 mt-1 uppercase">LKR 35.00</p>
-                </button>
-                <button onClick={() => setType('react')} className={`p-5 rounded-3xl border-2 transition-all ${type === 'react' ? 'border-blue-500 bg-blue-500/5' : 'border-slate-100 dark:border-white/5 opacity-40 grayscale'}`}>
-                  <Heart className={`mb-2 ${type === 'react' ? 'text-blue-500' : ''}`} size={24} />
-                  <p className="font-black text-sm dark:text-white">Reactions</p>
-                  <p className="text-[10px] font-bold text-blue-500 mt-1 uppercase">LKR 5.00</p>
-                </button>
-              </div>
+          <div className="p-6 space-y-5">
+            <div className="grid grid-cols-2 gap-3">
+              <button onClick={() => setType('follow')} className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center ${type === 'follow' ? 'border-blue-500 bg-blue-500/5' : 'border-slate-100 dark:border-white/5 opacity-50 grayscale'}`}>
+                <UserPlus className={`${type === 'follow' ? 'text-blue-500' : ''}`} size={20} />
+                <span className="font-black text-[11px] mt-1 dark:text-white uppercase">Followers</span>
+              </button>
+              <button onClick={() => setType('react')} className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center ${type === 'react' ? 'border-cyan-500 bg-cyan-500/5' : 'border-slate-100 dark:border-white/5 opacity-50 grayscale'}`}>
+                <Heart className={`${type === 'react' ? 'text-cyan-500' : ''}`} size={20} />
+                <span className="font-black text-[11px] mt-1 dark:text-white uppercase">Reactions</span>
+              </button>
             </div>
 
-            {/* Emoji Selector - Only shows for Reactions */}
-            {type === 'react' && (
-               <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Select_Reaction</label>
-                  <div className="flex flex-wrap gap-2">
-                    {availableEmojis.map(emoji => (
-                      <button 
-                        key={emoji}
-                        onClick={() => setSelectedEmoji(emoji)}
-                        className={`w-11 h-11 flex items-center justify-center rounded-2xl text-xl transition-all ${selectedEmoji === emoji ? 'bg-blue-500 scale-110 shadow-lg shadow-blue-500/40' : 'bg-slate-100 dark:bg-white/5 hover:bg-slate-200'}`}
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
-               </div>
-            )}
-
-            {/* Link Input */}
-            <div className="space-y-3">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Channel_Endpoint</label>
+            <div className="space-y-1.5">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Channel Link</label>
               <input 
                 type="text"
                 placeholder="https://whatsapp.com/channel/..."
                 value={link}
                 onChange={(e) => setLink(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-2xl py-5 px-6 font-bold text-sm dark:text-white outline-none focus:ring-4 ring-blue-500/10 transition-all"
+                className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-2xl py-4 px-5 text-xs font-bold dark:text-white outline-none focus:ring-2 ring-blue-500/20"
               />
             </div>
 
-            {/* Status Alert */}
-            {status && (
-              <div className={`flex items-start gap-4 p-5 rounded-2xl border animate-in zoom-in duration-300 ${status.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`}>
-                {status.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
-                <p className="text-[10px] font-black uppercase tracking-widest">{status.msg}</p>
+            {type === 'react' && (
+              <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Reaction Mix (Max 10)</label>
+                <div className="flex flex-wrap gap-2 p-2 bg-slate-50 dark:bg-black/20 rounded-2xl border border-slate-100 dark:border-white/5">
+                  {selectedEmojis.map(emoji => (
+                    <button key={emoji} onClick={() => setSelectedEmojis(selectedEmojis.filter(e => e !== emoji))} className="bg-white dark:bg-white/5 p-2 rounded-xl text-sm shadow-sm flex items-center group">
+                      {emoji} <X size={10} className="ml-1 text-red-500" />
+                    </button>
+                  ))}
+                  <button onClick={() => setIsEmojiMenuOpen(!isEmojiMenuOpen)} className="p-2 rounded-xl bg-blue-500 text-white shadow-lg active:scale-90 transition-transform">
+                    <SmilePlus size={16} />
+                  </button>
+                </div>
+                {isEmojiMenuOpen && (
+                  <div className="grid grid-cols-6 gap-2 bg-slate-50 dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-white/10 shadow-xl max-h-40 overflow-y-auto">
+                    {allEmojis.map(emoji => (
+                      <button key={emoji} onClick={() => { if(selectedEmojis.length < 10) setSelectedEmojis([...selectedEmojis, emoji]); setIsEmojiMenuOpen(false); }} className="h-10 flex items-center justify-center text-lg hover:bg-blue-500/10 rounded-lg transition-colors">{emoji}</button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Launch Button */}
+            <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Quantity</label>
+                    <div className="relative">
+                        <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                        <input type="number" min="10" max="150" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-2xl py-4 pl-10 pr-4 text-xs font-black dark:text-white outline-none focus:ring-2 ring-blue-500/20"/>
+                    </div>
+                </div>
+                <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Total Cost</label>
+                    <div className="w-full bg-blue-500/5 border border-blue-500/20 rounded-2xl py-4 px-5 text-center flex items-center justify-center h-[50px]">
+                        <span className="text-[11px] font-black text-blue-500">
+                            {totalCost > 0 ? `LKR ${totalCost.toFixed(2)}` : (type === 'react' ? 'PROMO: FREE' : '0.00')}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
             <button
               onClick={handleExecute}
-              disabled={loading.executing || !link}
-              className={`w-full py-6 rounded-2xl font-black text-xs uppercase tracking-[0.4em] transition-all active:scale-[0.98] disabled:opacity-20 text-white shadow-2xl relative overflow-hidden ${
-                type === 'follow' ? 'bg-emerald-600' : 'bg-blue-600'
-              }`}
+              disabled={loading.executing || !link || (type === 'react' && selectedEmojis.length === 0)}
+              className="w-full py-5 rounded-[1.5rem] font-black text-[11px] uppercase tracking-[0.2em] transition-all active:scale-[0.98] disabled:opacity-20 text-white shadow-xl bg-gradient-to-r from-blue-600 to-blue-800"
             >
               {loading.executing ? (
-                <div className="flex items-center justify-center gap-3">
-                  <Loader2 size={18} className="animate-spin" />
-                  <span className="animate-pulse">DEPLOING STRIKE...</span>
+                <div className="flex items-center justify-center gap-2">
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>DEPLOING TO NODES...</span>
                 </div>
               ) : (
                 <div className="flex items-center justify-center gap-2">
-                  <span>INITIATE PROTOCOL</span>
-                  <ChevronRight size={18} />
+                  <Target size={18} />
+                  <span>INITIATE DZD STRIKE</span>
                 </div>
               )}
             </button>
+
+            {status && (
+              <div className={`flex items-center gap-3 p-4 rounded-2xl border text-[9px] font-black uppercase tracking-tight animate-in zoom-in ${status.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`}>
+                {status.type === 'success' ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
+                {status.msg}
+              </div>
+            )}
           </div>
         </div>
-
-        <p className="mt-8 text-center text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] leading-relaxed">
-          Warning: Unauthorized access to endpoints is logged.<br/>Strike delivery: 5-15 Minutes.
+        <p className="mt-6 text-center text-[8px] font-bold text-slate-400 uppercase tracking-widest opacity-60">
+          Node Distribution Protocol Active<br/>
+          Secure Cloud Infrastructure • DzD Automation
         </p>
       </div>
     </div>
