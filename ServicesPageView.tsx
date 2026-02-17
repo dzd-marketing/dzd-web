@@ -9,7 +9,7 @@ import {
   Zap, 
   ArrowRight,
   ChevronUp,
-  MessageCircle // 👈 Add this import
+  MessageCircle
 } from 'lucide-react';
 import { fetchSmmApi } from './DashboardPage';
 import { useNavigate } from 'react-router-dom';
@@ -151,7 +151,7 @@ const scrollToTop = () => {
   });
   };
 
-  // 👇 Add this function for WhatsApp Boost navigation
+  // Add this function for WhatsApp Boost navigation
   const handleWhatsAppBoost = () => {
     navigate('/wa-boost');
     window.scrollTo({
@@ -204,11 +204,11 @@ const scrollToTop = () => {
             </div>
             
             <div className="relative flex flex-col lg:flex-row gap-3">
-              {/* Categories Menu Button */}
+              {/* Categories Menu Button - Fixed height to match WhatsApp button */}
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setCategoriesOpen(!categoriesOpen)}
-                  className="flex items-center justify-between w-40 px-5 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl font-bold text-sm shadow-md hover:shadow-xl transition-all hover:bg-blue-50 dark:hover:bg-slate-800 focus:outline-none"
+                  className="flex items-center justify-between w-40 px-5 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl font-bold text-sm shadow-md hover:shadow-xl transition-all hover:bg-blue-50 dark:hover:bg-slate-800 focus:outline-none h-[42px]"
                 >
                   Categories
                   <ChevronUp
@@ -247,15 +247,13 @@ const scrollToTop = () => {
                 )}
               </div>
 
-              {/* 👇 WhatsApp Boost Button - Added here */}
+              {/* WhatsApp Boost Button - Full text on all devices, same height as Categories */}
               <button
                 onClick={handleWhatsAppBoost}
-                className="flex items-center justify-center gap-2 px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold text-sm shadow-md hover:shadow-xl transition-all active:scale-95 whitespace-nowrap"
+                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold text-sm shadow-md hover:shadow-xl transition-all active:scale-95 whitespace-nowrap h-[42px]"
               >
                 <MessageCircle size={18} />
-                <span className="hidden sm:inline">WhatsApp</span>
-                <span className="sm:hidden">WA</span>
-                <span className="hidden md:inline"> Boost</span>
+                <span>WhatsApp Boost</span>
               </button>
             </div>
           </div>
@@ -279,7 +277,7 @@ const scrollToTop = () => {
               </div>
               
               <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5 md:max-w-md">
-                {categories.slice(0, 8).map(cat => (
+                {categories.slice(0, 6).map(cat => (
                   <button 
                     key={cat} 
                     onClick={() => { setActiveCategory(cat); setVisibleCount(25); }}
@@ -289,13 +287,13 @@ const scrollToTop = () => {
                   </button>
                 ))}
                 
-                {/* 👇 WhatsApp Boost Button in Mini Header */}
+                {/* WhatsApp Boost Button in Mini Header - Full text */}
                 <button
                   onClick={handleWhatsAppBoost}
                   className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded-lg text-[8px] font-black uppercase tracking-widest whitespace-nowrap transition-all border border-green-600 flex-shrink-0 hover:bg-green-700"
                 >
                   <MessageCircle size={12} />
-                  <span>WA</span>
+                  <span>WA Boost</span>
                 </button>
               </div>
             </div>
@@ -426,14 +424,6 @@ const scrollToTop = () => {
         className="fixed bottom-24 right-6 md:right-10 w-12 h-12 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center text-blue-600 shadow-2xl border border-slate-200 dark:border-white/10 z-50 md:hidden active:scale-90 transition-transform hover:bg-blue-600 hover:text-white"
       >
         <ChevronUp size={24} />
-      </button>
-
-      {/* Floating WhatsApp Boost Button for Mobile */}
-      <button
-        onClick={handleWhatsAppBoost}
-        className="fixed bottom-24 left-6 md:hidden w-12 h-12 bg-green-600 rounded-full flex items-center justify-center text-white shadow-2xl border border-green-500 z-50 active:scale-90 transition-transform hover:bg-green-700"
-      >
-        <MessageCircle size={20} />
       </button>
 
       {/* Success/Error States */}
