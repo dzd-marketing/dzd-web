@@ -77,7 +77,7 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
   const [currentSlide, setCurrentSlide] = useState(0);
   const [autoplay, setAutoplay] = useState(true);
   const [user, setUser] = useState<any>(null);
-  const sliderRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Check auth state
   useEffect(() => {
@@ -318,18 +318,52 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
     }
   ];
 
-  // Slider functions
+  // Responsive slides per view (for dots)
+  const [slidesPerView, setSlidesPerView] = useState(1);
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setSlidesPerView(4);
+      } else if (window.innerWidth >= 768) {
+        setSlidesPerView(2.5);
+      } else {
+        setSlidesPerView(1.2);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Scroll functions (page‑based)
   const nextSlide = () => {
-    setCurrentSlide((prev) => 
-      prev + 1 >= services.length ? 0 : prev + 1
-    );
+    if (scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      container.scrollBy({ left: container.clientWidth, behavior: 'smooth' });
+    }
   };
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => 
-      prev - 1 < 0 ? services.length - 1 : prev - 1
-    );
+    if (scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      container.scrollBy({ left: -container.clientWidth, behavior: 'smooth' });
+    }
   };
+
+  // Update currentSlide based on scroll position
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const scrollLeft = container.scrollLeft;
+      const page = Math.round(scrollLeft / container.clientWidth);
+      setCurrentSlide(Math.min(page, services.length - 1));
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [services.length]);
 
   // Autoplay
   useEffect(() => {
@@ -338,35 +372,21 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
       nextSlide();
     }, 5000);
     return () => clearInterval(interval);
-  }, [currentSlide, autoplay]);
+  }, [autoplay]);
 
-  // Responsive slide calculation
-  const [slideWidth, setSlideWidth] = useState(100);
-  const [slidesPerView, setSlidesPerView] = useState(1);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 1024) {
-        setSlidesPerView(4);
-        setSlideWidth(25);
-      } else if (window.innerWidth >= 768) {
-        setSlidesPerView(2.5);
-        setSlideWidth(40);
-      } else {
-        setSlidesPerView(1.2);
-        setSlideWidth(83.333);
-      }
-    };
-    
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  // Go to specific slide (dot click)
+  const goToSlide = (index: number) => {
+    if (scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      container.scrollTo({ left: index * container.clientWidth, behavior: 'smooth' });
+      setCurrentSlide(index);
+    }
+  };
 
   // Handle button clicks based on auth state
   const handleViewServices = () => {
     if (user) {
-      navigate('/dashboard'); // Replace with your actual services route
+      navigate('/dashboard');
     } else {
       onSignupClick?.();
     }
@@ -374,7 +394,7 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
 
   const handleCreateAccount = () => {
     if (user) {
-      navigate('/dashboard'); // Replace with your dashboard route
+      navigate('/dashboard');
     } else {
       onSignupClick?.();
     }
@@ -382,15 +402,15 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
 
   const handleViewRates = () => {
     if (user) {
-      navigate('/services'); // Replace with your services route
+      navigate('/services');
     } else {
       onSignupClick?.();
     }
   };
 
-    const handleSupportPage = () => {
+  const handleSupportPage = () => {
     if (user) {
-      navigate('/support'); // Replace with your services route
+      navigate('/support');
     } else {
       onSignupClick?.();
     }
@@ -398,7 +418,7 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
 
   return (
     <div className="bg-slate-50 dark:bg-[#020617] min-h-screen selection:bg-blue-600/30">
-      {/* ========== HERO SECTION - MOBILE OPTIMIZED ========== */}
+      {/* ========== HERO SECTION ========== */}
       <section className="relative pt-24 sm:pt-32 pb-20 lg:pt-40 lg:pb-28 overflow-hidden">
         <div className="mesh-bg opacity-40">
           <div className="blob -top-20 -left-20 animate-pulse-slow bg-blue-600/20"></div>
@@ -408,8 +428,7 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-20 items-center">
-            
-            {/* Left Content - Mobile First (Text) */}
+            {/* Left Content */}
             <div className="text-left order-1 lg:order-1">
               <RevealSection>
                 <div className="inline-flex items-center gap-2 bg-blue-600/10 dark:bg-blue-500/20 border border-blue-600/30 px-4 py-2 rounded-full mb-4 sm:mb-6">
@@ -436,7 +455,8 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
                   </button>
                   <button
                     onClick={() => navigate('/support')}
-                    className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 sm:gap-3 hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
+                    className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 sm:gap-3 hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+                  >
                     <HeadphonesIcon size={14} className="sm:w-4 sm:h-4" /> 24/7 Support
                   </button>
                 </div>
@@ -462,7 +482,6 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
             <div className="relative order-2 lg:order-2">
               <RevealSection className="lg:pl-10">
                 <div className="relative group px-2 sm:px-0">
-                  {/* Main Dashboard Image */}
                   <div className="glass p-2 sm:p-3 rounded-3xl sm:rounded-[3.5rem] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] lg:shadow-[0_50px_100px_-15px_rgba(0,0,0,0.6)] animate-float border-white/10 relative overflow-hidden group-hover:rotate-1 transition-transform duration-700">
                     <div className="bg-[#050b1a] rounded-2xl sm:rounded-[2.5rem] lg:rounded-[3rem] overflow-hidden aspect-[4/3] relative border border-white/5">
                       <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-transparent z-10 opacity-60"></div>
@@ -528,8 +547,9 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
         </div>
       </RevealSection>
 
-      {/* ========== TOP SERVICES SLIDER ========== */}
-      <section className="py-16 lg:py-24 bg-white dark:bg-[#020617] relative overflow-hidden">
+      {/* ========== TOP SERVICES SLIDER (FIXED) ========== */}
+      {/* Removed overflow-hidden to prevent clipping on hover */}
+      <section className="py-16 lg:py-24 bg-white dark:bg-[#020617] relative">
         <div className="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-slate-50 to-transparent dark:from-[#020617] dark:to-transparent"></div>
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -569,113 +589,108 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
             </div>
           </div>
 
-          {/* Services Slider */}
+          {/* Services Slider - Scroll Snap */}
           <div className="relative">
             <div 
-              ref={sliderRef}
-              className="overflow-hidden"
+              ref={scrollContainerRef}
+              className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar gap-4 lg:gap-6 scroll-smooth"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
-              <div 
-                className="flex transition-transform duration-500 ease-out gap-4 lg:gap-6"
-                style={{ transform: `translateX(-${currentSlide * (100 / slidesPerView)}%)` }}
-              >
-                {services.map((service, index) => (
-                  <div 
-                    key={index} 
-                    className="flex-shrink-0"
-                    style={{ flexBasis: `calc(${100 / slidesPerView}% - ${slidesPerView > 1 ? 16 : 0}px)` }}
-                  >
-                    <div className={`
-                      relative bg-white dark:bg-[#0a0f1c] rounded-2xl lg:rounded-3xl border h-full 
-                      ${service.popular 
-                        ? 'border-2 border-blue-500/50 shadow-xl shadow-blue-600/20 dark:shadow-blue-600/10' 
-                        : 'border border-slate-200 dark:border-white/10 hover:border-blue-500/30'
-                      } 
-                      p-5 sm:p-6 lg:p-7 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 lg:hover:-translate-y-2 group
-                    `}>
-                      
-                      {/* POPULAR BADGE */}
-                      {service.popular && (
-                        <div className="absolute left-1/2 -translate-x-1/2 -top-3 z-50">
-                          <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-[8px] lg:text-[9px] font-black px-3 lg:px-4 py-1.5 lg:py-2 rounded-full uppercase tracking-widest shadow-lg shadow-blue-600/30 whitespace-nowrap flex items-center gap-1.5">
-                            <Sparkles size={10} className="lg:w-3 lg:h-3" />
-                            MOST POPULAR
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Platform Header */}
-                      <div className="flex items-center gap-3 mb-5 lg:mb-6">
-                        <div className={`
-                          w-12 h-12 lg:w-14 lg:h-14 rounded-2xl lg:rounded-2xl 
-                          ${service.bgColor} flex items-center justify-center 
-                          ${service.textColor} flex-shrink-0
-                          group-hover:scale-110 transition-transform duration-300
-                          shadow-lg ${service.popular ? 'shadow-blue-600/20' : ''}
-                        `}>
-                          {service.icon}
-                        </div>
-                        <div>
-                          <h3 className="text-xl lg:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                            {service.name}
-                          </h3>
-                          <p className="text-[9px] lg:text-[10px] font-black text-slate-400 uppercase tracking-wider mt-0.5">
-                            {service.features.length} SERVICES
-                          </p>
+              {services.map((service, index) => (
+                <div 
+                  key={index} 
+                  className="flex-shrink-0 snap-start w-[85%] sm:w-[45%] lg:w-[23.5%]"
+                >
+                  <div className={`
+                    relative bg-white dark:bg-[#0a0f1c] rounded-2xl lg:rounded-3xl border h-full 
+                    ${service.popular 
+                      ? 'border-2 border-blue-500/50 shadow-xl shadow-blue-600/20 dark:shadow-blue-600/10' 
+                      : 'border border-slate-200 dark:border-white/10 hover:border-blue-500/30'
+                    } 
+                    p-5 sm:p-6 lg:p-7 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 lg:hover:-translate-y-2 group
+                  `}>
+                    
+                    {/* POPULAR BADGE - TOP RIGHT INSIDE CARD */}
+                    {service.popular && (
+                      <div className="absolute top-0 right-0 z-50">
+                        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-[8px] lg:text-[9px] font-black px-3 lg:px-4 py-1.5 lg:py-2 rounded-bl-xl rounded-tr-xl shadow-lg shadow-blue-600/30 flex items-center gap-1.5">
+                          <Sparkles size={10} className="lg:w-3 lg:h-3" />
+                          MOST POPULAR
                         </div>
                       </div>
-                      
-                      {/* Features Grid */}
-                      <div className="grid grid-cols-2 gap-3 lg:gap-4 mb-5 lg:mb-6">
-                        {service.features.slice(0, 4).map((feature, i) => (
-                          <div key={i} className="bg-slate-50 dark:bg-white/5 rounded-xl p-2 lg:p-3">
-                            <p className="text-[8px] lg:text-[9px] font-black text-slate-400 uppercase tracking-wider mb-0.5">
-                              {feature.label}
-                            </p>
-                            <p className="text-xs lg:text-sm font-black text-slate-900 dark:text-white">
-                              {feature.value}
-                            </p>
-                          </div>
-                        ))}
+                    )}
+                    
+                    {/* Platform Header */}
+                    <div className="flex items-center gap-3 mb-5 lg:mb-6">
+                      <div className={`
+                        w-12 h-12 lg:w-14 lg:h-14 rounded-2xl lg:rounded-2xl 
+                        ${service.bgColor} flex items-center justify-center 
+                        ${service.textColor} flex-shrink-0
+                        group-hover:scale-110 transition-transform duration-300
+                        shadow-lg ${service.popular ? 'shadow-blue-600/20' : ''}
+                      `}>
+                        {service.icon}
                       </div>
-                      
-                      {/* Price & Min/Max */}
-                      <div className="flex items-center justify-between pt-4 lg:pt-5 border-t border-slate-100 dark:border-white/5 mt-auto">
-                        <div>
-                          <p className="text-[8px] lg:text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">
-                            STARTING AT
-                          </p>
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-xl lg:text-2xl font-black text-blue-600 dark:text-blue-400">
-                              {service.rate}
-                            </span>
-                            <span className="text-[10px] lg:text-xs font-bold text-slate-500">
-                              /{service.per}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[8px] lg:text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">
-                            MIN/MAX
+                      <div>
+                        <h3 className="text-xl lg:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                          {service.name}
+                        </h3>
+                        <p className="text-[9px] lg:text-[10px] font-black text-slate-400 uppercase tracking-wider mt-0.5">
+                          {service.features.length} SERVICES
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Features Grid */}
+                    <div className="grid grid-cols-2 gap-3 lg:gap-4 mb-5 lg:mb-6">
+                      {service.features.slice(0, 4).map((feature, i) => (
+                        <div key={i} className="bg-slate-50 dark:bg-white/5 rounded-xl p-2 lg:p-3">
+                          <p className="text-[8px] lg:text-[9px] font-black text-slate-400 uppercase tracking-wider mb-0.5">
+                            {feature.label}
                           </p>
                           <p className="text-xs lg:text-sm font-black text-slate-900 dark:text-white">
-                            {service.min} - {service.max}
+                            {feature.value}
                           </p>
                         </div>
-                      </div>
-                      
-                      {/* View Rates Button */}
-                      <button 
-                        onClick={handleViewRates}
-                        className="w-full mt-4 lg:mt-5 py-3 lg:py-3.5 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-white/5 dark:to-white/10 hover:from-blue-600 hover:to-blue-700 text-slate-700 dark:text-slate-300 hover:text-white rounded-xl lg:rounded-2xl text-[10px] lg:text-xs font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 group/btn border border-slate-200 dark:border-white/10 hover:border-transparent shadow-sm hover:shadow-lg"
-                      >
-                        <span>VIEW RATES</span>
-                        <ArrowRight size={12} className="lg:w-3 lg:h-3 group-hover/btn:translate-x-1.5 transition-transform duration-300" />
-                      </button>
+                      ))}
                     </div>
+                    
+                    {/* Price & Min/Max */}
+                    <div className="flex items-center justify-between pt-4 lg:pt-5 border-t border-slate-100 dark:border-white/5 mt-auto">
+                      <div>
+                        <p className="text-[8px] lg:text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">
+                          STARTING AT
+                        </p>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-xl lg:text-2xl font-black text-blue-600 dark:text-blue-400">
+                            {service.rate}
+                          </span>
+                          <span className="text-[10px] lg:text-xs font-bold text-slate-500">
+                            /{service.per}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[8px] lg:text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">
+                          MIN/MAX
+                        </p>
+                        <p className="text-xs lg:text-sm font-black text-slate-900 dark:text-white">
+                          {service.min} - {service.max}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* View Rates Button */}
+                    <button 
+                      onClick={handleViewRates}
+                      className="w-full mt-4 lg:mt-5 py-3 lg:py-3.5 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-white/5 dark:to-white/10 hover:from-blue-600 hover:to-blue-700 text-slate-700 dark:text-slate-300 hover:text-white rounded-xl lg:rounded-2xl text-[10px] lg:text-xs font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 group/btn border border-slate-200 dark:border-white/10 hover:border-transparent shadow-sm hover:shadow-lg"
+                    >
+                      <span>VIEW RATES</span>
+                      <ArrowRight size={12} className="lg:w-3 lg:h-3 group-hover/btn:translate-x-1.5 transition-transform duration-300" />
+                    </button>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           </div>
           
@@ -684,7 +699,7 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
             {Array.from({ length: Math.ceil(services.length / slidesPerView) }).map((_, i) => (
               <button
                 key={i}
-                onClick={() => setCurrentSlide(i * slidesPerView)}
+                onClick={() => goToSlide(i * Math.floor(slidesPerView))}
                 className={`h-2 rounded-full transition-all duration-300 ${
                   Math.floor(currentSlide / slidesPerView) === i 
                     ? 'w-8 lg:w-10 bg-gradient-to-r from-blue-600 to-purple-600' 
@@ -795,7 +810,8 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
                 </button>
                 <button 
                   onClick={() => navigate('/contact')}
-                  className="bg-white/10 backdrop-blur-md text-white px-6 lg:px-8 py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black text-xs lg:text-sm border border-white/20 hover:bg-white/20 transition-all flex items-center justify-center gap-2 lg:gap-3">
+                  className="bg-white/10 backdrop-blur-md text-white px-6 lg:px-8 py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black text-xs lg:text-sm border border-white/20 hover:bg-white/20 transition-all flex items-center justify-center gap-2 lg:gap-3"
+                >
                   <HeadphonesIcon size={14} className="lg:w-4 lg:h-4" /> Contact Sales
                 </button>
               </div>
@@ -804,6 +820,12 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
         </RevealSection>
       </section>
 
+      {/* Hide scrollbar style */}
+      <style>{`
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 }
