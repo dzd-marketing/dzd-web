@@ -46,24 +46,17 @@ export default function DashboardHomeView({ user, setActiveTab }: any) {
     setLoading(prev => ({ ...prev, orders: true }));
     try {
       const ordersRef = collection(db, 'users', uid, 'orders');
-      const q = query(
-        ordersRef,
-        orderBy('date', 'desc'),
-        limit(5)
-      );
-      const querySnapshot = await getDocs(q);
       
-      const orders: any[] = [];
+      // Get total count and stats
+      const countQuery = query(ordersRef);
+      const countSnapshot = await getDocs(countQuery);
+      
       let totalCount = 0;
       let activeCount = 0;
       let completedCount = 0;
 
-      // Get total count (without limit)
-      const countQuery = query(ordersRef);
-      const countSnapshot = await getDocs(countQuery);
-      totalCount = countSnapshot.size;
-
       countSnapshot.forEach(doc => {
+        totalCount++;
         const order = doc.data();
         const status = order.status?.toLowerCase() || '';
         
@@ -75,7 +68,15 @@ export default function DashboardHomeView({ user, setActiveTab }: any) {
       });
 
       // Get recent orders for display
-      querySnapshot.forEach(doc => {
+      const recentQuery = query(
+        ordersRef,
+        orderBy('date', 'desc'),
+        limit(5)
+      );
+      const recentSnapshot = await getDocs(recentQuery);
+      
+      const orders: any[] = [];
+      recentSnapshot.forEach(doc => {
         orders.push({ id: doc.id, ...doc.data() });
       });
 
@@ -94,7 +95,7 @@ export default function DashboardHomeView({ user, setActiveTab }: any) {
     }
   };
 
-  // Fetch tickets from localStorage (since we're using localStorage for tickets)
+  // Fetch tickets from localStorage
   const fetchTickets = (uid: string) => {
     try {
       const savedTickets = localStorage.getItem(`supportTickets_${uid}`);
@@ -120,8 +121,8 @@ export default function DashboardHomeView({ user, setActiveTab }: any) {
       // Auto-refresh balance every 30 seconds
       const balanceInterval = setInterval(() => fetchBalance(user.uid), 30000);
       
-      // Auto-refresh orders every 60 seconds
-      const ordersInterval = setInterval(() => fetchOrders(user.uid), 60000);
+      // Auto-refresh orders every 15 seconds (like orders page)
+      const ordersInterval = setInterval(() => fetchOrders(user.uid), 15000);
       
       return () => {
         clearInterval(balanceInterval);
@@ -218,7 +219,11 @@ export default function DashboardHomeView({ user, setActiveTab }: any) {
               <History size={18} className="sm:w-[22px] sm:h-[22px]" />
             </div>
             <span className="text-[8px] sm:text-[10px] font-black text-pink-500 bg-pink-500/10 px-2 py-1 rounded-lg uppercase tracking-widest whitespace-nowrap">
-              {loading.orders ? 'Loading...' : `+${orderStats.recentCount} New`}
+              {loading.orders ? (
+                <Loader size={10} className="animate-spin" />
+              ) : (
+                `+${orderStats.recentCount} New`
+              )}
             </span>
           </div>
           <p className="text-slate-500 text-[8px] sm:text-[10px] font-black uppercase tracking-widest mb-1">
@@ -249,7 +254,7 @@ export default function DashboardHomeView({ user, setActiveTab }: any) {
             {orderStats.active}
           </h3>
           <p className="text-[8px] sm:text-[9px] font-bold text-green-500 mt-1">
-            {((orderStats.active / (orderStats.total || 1)) * 100).toFixed(0)}% of total
+            {orderStats.total > 0 ? ((orderStats.active / orderStats.total) * 100).toFixed(0) : 0}% of total
           </p>
         </div>
 
