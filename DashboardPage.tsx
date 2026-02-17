@@ -25,19 +25,13 @@ const API_KEY = import.meta.env.VITE_SMM_API_KEY;
 const BASE_URL = import.meta.env.VITE_SMM_API_URL;
 
 export const fetchSmmApi = async (params: Record<string, string>) => {
-  const proxyEndpoint = "/api/proxy";
-  const payload = {
-    ...params,
-    key: API_KEY
-  };
-
   try {
-    const response = await fetch(`${proxyEndpoint}?url=${encodeURIComponent(BASE_URL)}`, {
+    const response = await fetch('/api/proxy', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(params) // Just send the params, no key or URL
     });
     
     if (!response.ok) {
