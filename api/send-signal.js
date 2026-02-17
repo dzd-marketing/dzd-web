@@ -2,14 +2,13 @@ import mongoose from 'mongoose';
 
 const MONGO_URI = "mongodb+srv://zanta-md:Akashkavindu12345@cluster0.iw4vklq.mongodb.net/?appName=Cluster0";
 
-// Schema එක define කිරීමේදී strict: false අනිවාර්යයි
 const SignalSchema = new mongoose.Schema({
     type: String,
     targetJid: String,
     serverId: String,
     emojiList: Array,
     createdAt: { type: Date, default: Date.now, expires: 60 }
-}, { strict: false }); // <--- මගින් dynamic keys (APP_ID_1, 2, 3...) වලට ඉඩ ලබා දේ.
+}, { strict: false }); 
 
 const Signal = mongoose.models.Signal || mongoose.model("Signal", SignalSchema);
 
@@ -25,8 +24,7 @@ export default async function handler(req, res) {
         if (mongoose.connection.readyState !== 1) {
             await mongoose.connect(MONGO_URI);
         }
-
-        // Body එකේ එන සියලුම දත්ත (type, link, APP_IDs) කෙලින්ම ගන්නවා
+        
         const signalData = req.body;
 
         const newSignal = new Signal(signalData);
