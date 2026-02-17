@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import emailjs from '@emailjs/browser';
 import {
   Zap,
   Mail,
@@ -8,29 +9,36 @@ import {
   ShieldCheck,
   DollarSign,
   Facebook,
-  Twitter,
   Instagram,
   Youtube,
   MessageCircle
 } from 'lucide-react';
 
-// Social Icons (using Lucide React icons)
+// Social Icons
 const FacebookIcon = Facebook;
 const WhatsAppIcon = MessageCircle;
 const InstagramIcon = Instagram;
 const YoutubeIcon = Youtube;
 
 export default function Footer({ user, onSignupClick }: any) {
-
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<{
+    type: 'success' | 'error' | null;
+    message: string;
+  }>({ type: null, message: '' });
 
-  
+  // Initialize EmailJS with your public key
+  useEffect(() => {
+    emailjs.init('fCbvtnusxYhjxJUge'); // Replace with npyour Public Key
+  }, []);
 
   const handleNavigation = (path: string) => {
     navigate(path);
   };
 
-    const handleServicesPage = () => {
+  const handleServicesPage = () => {
     if (user) {
       navigate('/dashboard/services');
     } else {
@@ -38,7 +46,7 @@ export default function Footer({ user, onSignupClick }: any) {
     }
   };
 
-      const handleDashboardHome = () => {
+  const handleDashboardHome = () => {
     if (user) {
       navigate('/dashboard/home');
     } else {
@@ -46,11 +54,46 @@ export default function Footer({ user, onSignupClick }: any) {
     }
   };
 
-        const handleTicketsPage = () => {
+  const handleTicketsPage = () => {
     if (user) {
       navigate('/dashboard/tickets');
     } else {
       onSignupClick?.();
+    }
+  };
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setLoading(true);
+    setSubscriptionStatus({ type: null, message: '' });
+
+    try {
+      // Template parameters must match your EmailJS template variables
+      const templateParams = {
+        user_email: email,
+      };
+
+      await emailjs.send(
+        'service_fv08c4s',   // Replace with your Service ID
+        'template_n1soo2o',  // Replace with your Template ID
+        templateParams
+      );
+
+      setSubscriptionStatus({
+        type: 'success',
+        message: 'Thanks for subscribing! Check your inbox for updates.'
+      });
+      setEmail('');
+    } catch (error) {
+      console.error('Subscription error:', error);
+      setSubscriptionStatus({
+        type: 'error',
+        message: 'Something went wrong. Please try again later.'
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -203,19 +246,34 @@ export default function Footer({ user, onSignupClick }: any) {
             </p>
             
             {/* Newsletter Form */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-6">
+            <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3 mb-3">
               <div className="flex-1 relative">
                 <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input 
                   type="email" 
+                  name="user_email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="Your email address" 
+                  required
                   className="w-full h-11 lg:h-12 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-9 pr-4 text-slate-900 dark:text-white text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
                 />
               </div>
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 h-11 lg:h-12 rounded-xl font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap">
-                Subscribe
+              <button 
+                type="submit"
+                disabled={loading}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 h-11 lg:h-12 rounded-xl font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Subscribing...' : 'Subscribe'}
               </button>
-            </div>
+            </form>
+
+            {/* Subscription status message */}
+            {subscriptionStatus.type && (
+              <div className={`text-sm mb-4 ${subscriptionStatus.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                {subscriptionStatus.message}
+              </div>
+            )}
             
             {/* Contact Info */}
             <div className="space-y-3">
