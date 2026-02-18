@@ -13,7 +13,20 @@ import {
 } from 'lucide-react';
 import { fetchSmmApi } from './DashboardPage';
 import { useNavigate } from 'react-router-dom';
-import { getCachedServices, preloadServices } from './src/utils/serviceCache';
+
+// Add this direct fetch function
+const fetchServicesDirect = async () => {
+  console.log('🌐 Fetching services directly from worker...');
+  const response = await fetch('https://smm-services-cache.sitewasd2026.workers.dev/api/services');
+  
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  
+  const data = await response.json();
+  console.log('📦 Received data:', data);
+  return data;
+};
 
 // Helper to calculate price with 65% profit
 const calculatePriceWithProfit = (serviceRate: number): number => {
@@ -72,28 +85,35 @@ const loadServices = async () => {
   setLoading(true);
   setError('');
   try {
-    console.log('Fetching services...');
-    const data = await getCachedServices();
+    console.log('Fetching services directly...');
+    const data = await fetchServicesDirect();
+    
     console.log('Data received:', data);
     console.log('Is array?', Array.isArray(data));
     console.log('Length:', data?.length);
-    setServices(data);
+    
+    // Ensure we're setting an array
+    if (Array.isArray(data)) {
+      setServices(data);
+      console.log('✅ Services set successfully:', data.length);
+    } else {
+      console.error('❌ Data is not an array:', data);
+      setServices([]);
+      setError('Invalid data format received');
+    }
   } catch (err) {
-    console.error('ERROR:', err);
+    console.error('❌ ERROR:', err);
     setError('Failed to load services. Please refresh.');
+    setServices([]);
   } finally {
     setLoading(false);
   }
 };
 
-  useEffect(() => {
-  // Preload services in background
-  preloadServices();
-}, []);
-
-  useEffect(() => {
-    loadServices();
-  }, []);
+// Load services on component mount
+useEffect(() => {
+  loadServices();
+}, []); // Empty dependency array = run once on mount
 
   // Handle scroll to hide/show header
   useEffect(() => {
