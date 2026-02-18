@@ -163,7 +163,7 @@ export default function TicketsView() {
             Please Login
           </h2>
           <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 px-4">
-            You need to be logged in to create and view support tickets.
+            You need to be logged in to create and view tickets section.
           </p>
         </div>
       </div>
@@ -176,7 +176,7 @@ export default function TicketsView() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-6">
         <div className="w-full sm:w-auto">
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-            Support Tickets
+            Tickets Section
           </h1>
           <div className="flex flex-wrap items-center gap-2 mt-1">
             <p className="text-slate-500 font-bold uppercase tracking-widest text-[8px] sm:text-[10px]">
