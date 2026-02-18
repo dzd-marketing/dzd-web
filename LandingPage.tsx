@@ -452,7 +452,7 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
       return;
     }
     if (serviceName === 'WhatsApp') {
-      navigate('/w-boost');
+      navigate('/wa-boost');
     } else {
       navigate('/services'); // or '/dashboard' – adjust as needed
     }
