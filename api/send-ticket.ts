@@ -19,12 +19,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { subject, priority, description, userEmail, userName } = req.body;
 
-    // Create transporter (USE ENV VARIABLES IN VERCEL)
+    // Create transporter for Zoho Mail
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.zoho.com',
+      port: 465,
+      secure: true, // use SSL
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: process.env.ZOHO_EMAIL_USER, // Your Zoho email address
+        pass: process.env.ZOHO_EMAIL_PASS, // Your Zoho app password or email password
+      },
+      tls: {
+        rejectUnauthorized: false // Only needed for some Zoho regions
       }
     });
 
@@ -37,7 +42,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const ticketId = 'TKT-' + Math.floor(1000 + Math.random() * 9000);
 
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: `"Support System" <${process.env.ZOHO_EMAIL_USER}>`, // Your Zoho email
       to: adminEmails.join(','),
       subject: `New Support Ticket: ${ticketId} - ${subject}`,
       html: `
