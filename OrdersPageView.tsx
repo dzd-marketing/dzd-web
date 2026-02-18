@@ -176,6 +176,7 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
   const [usdRate, setUsdRate] = useState(310); // Default rate
 
   const PAGE_SIZE = 30;
+  const [lastRefresh, setLastRefresh] = useState(0);
 
   // ============================================
   // FETCH USD EXCHANGE RATE (Every 6 Hours)
@@ -365,14 +366,7 @@ const refreshOrderStatuses = async () => {
     }
   }, [currentUser, activeView]);
 
-  useEffect(() => {
-    if (!currentUser || activeView !== 'orders' || !orders.length) return;
-    
-    refreshOrderStatuses();
-    const interval = setInterval(refreshOrderStatuses, 30000);
-    
-    return () => clearInterval(interval);
-  }, [currentUser, activeView, orders.length]);
+
 
 // CHECK BALANCE WHEN QUANTITY OR SERVICE CHANGES
 useEffect(() => {
@@ -682,13 +676,33 @@ const placeOrder = async (e: React.FormEvent) => {
     navigator.clipboard.writeText(text.toString());
   };
 
-  const handleManualRefresh = async () => {
+const handleManualRefresh = async () => {
+  // 15 second cooldown
+  const now = Date.now();
+  if (now - lastRefresh < 15000) {
+    const secondsLeft = Math.ceil((15000 - (now - lastRefresh)) / 1000);
+    setOrderError(`Please wait ${secondsLeft}s before refreshing again`);
+    
+    // Clear error after 3 seconds
+    setTimeout(() => setOrderError(''), 3000);
+    return;
+  }
+  
+  setLastRefresh(now);
+  setRefreshing(true);
+  
+  try {
     await loadUserOrders();
     await refreshOrderStatuses();
     if (currentUser) {
       await fetchUserBalance(currentUser.uid);
     }
-  };
+  } catch (err) {
+    console.error('Refresh failed:', err);
+  } finally {
+    setRefreshing(false);
+  }
+};
 
   // ============================================
   // RENDER
