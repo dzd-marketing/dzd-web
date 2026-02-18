@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { fetchSmmApi } from './DashboardPage';
 import { useNavigate } from 'react-router-dom';
+import { getCachedServices, preloadServices } from '../utils/serviceCache';
 
 // Helper to calculate price with 65% profit
 const calculatePriceWithProfit = (serviceRate: number): number => {
@@ -67,22 +68,24 @@ export default function ServicesPageView({ scrollContainerRef }: any) {
 
   const PAGE_SIZE = 40;
 
-  const loadServices = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const data = await fetchSmmApi({ action: 'services' });
-      if (Array.isArray(data)) {
-        setServices(data);
-      } else {
-        setError('Communication error: Node structure mismatch.');
-      }
-    } catch (err) {
-      setError('Service timeout: Server node unreachable.');
-    } finally {
-      setLoading(false);
-    }
-  };
+const loadServices = async () => {
+  setLoading(true);
+  setError('');
+  try {
+    // Use cached services instead of API
+    const data = await getCachedServices();
+    setServices(data);
+  } catch (err) {
+    setError('Failed to load services. Please refresh.');
+  } finally {
+    setLoading(false);
+  }
+};
+
+  useEffect(() => {
+  // Preload services in background
+  preloadServices();
+}, []);
 
   useEffect(() => {
     loadServices();
