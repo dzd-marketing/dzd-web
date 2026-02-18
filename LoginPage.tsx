@@ -119,6 +119,7 @@ export default function LoginPage({ onLogin, onClose, onSwitchToSignup }: { onLo
       }
 
       const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
       const result = await signInWithPopup(auth, provider);
       const userDoc = await getDoc(doc(db, 'users', result.user.uid));
       handleAuthSuccess({ 
