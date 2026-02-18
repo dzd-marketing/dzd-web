@@ -63,7 +63,7 @@ export default function ServicesPageView({ scrollContainerRef }: any) {
         setError('Communication error: Node structure mismatch.');
       }
     } catch (err) {
-      setError('Protocol timeout: Server node unreachable.');
+      setError('Service timeout: Server node unreachable.');
     } finally {
       setLoading(false);
     }
@@ -185,10 +185,10 @@ const scrollToTop = () => {
         <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">Protocol Directory</h1>
+              <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">Services Section</h1>
               <p className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-[0.3em] text-[9px] mt-1.5 flex items-center gap-2">
                 <Activity size={10} className="text-blue-500 animate-pulse" />
-                {filteredServices.length} Active Entry Nodes
+                {filteredServices.length} Active Services
               </p>
             </div>
             
@@ -198,7 +198,7 @@ const scrollToTop = () => {
               className="hidden md:flex items-center gap-2 px-5 py-3 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 text-slate-500 hover:text-blue-500 transition-all shadow-sm active:scale-95"
             >
               <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-              <span className="text-[9px] font-black uppercase tracking-widest">Resync Node</span>
+              <span className="text-[9px] font-black uppercase tracking-widest">Refresh Services</span>
             </button>
           </div>
 
@@ -207,7 +207,7 @@ const scrollToTop = () => {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
               <input 
                 type="text" 
-                placeholder="Search Protocol ID or Name..." 
+                placeholder="Search Service ID or Name..." 
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setVisibleCount(25); }}
                 className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-3.5 pl-12 pr-6 font-bold text-sm focus:border-blue-600 outline-none transition-all shadow-inner text-slate-900 dark:text-white"
@@ -280,7 +280,7 @@ const scrollToTop = () => {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
                 <input 
                   type="text" 
-                  placeholder="Search protocols..." 
+                  placeholder="Search Services..." 
                   value={searchTerm}
                   onChange={(e) => { setSearchTerm(e.target.value); setVisibleCount(25); }}
                   className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-2.5 pl-9 pr-4 font-bold text-xs focus:border-blue-600 outline-none transition-all"
@@ -320,7 +320,7 @@ const scrollToTop = () => {
             <thead>
               <tr className="border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/2">
                 <th className="px-8 py-5 text-[9px] font-black uppercase tracking-widest text-slate-400">ID</th>
-                <th className="px-8 py-5 text-[9px] font-black uppercase tracking-widest text-slate-400">Protocol Details</th>
+                <th className="px-8 py-5 text-[9px] font-black uppercase tracking-widest text-slate-400">Service Details</th>
                 <th className="px-8 py-5 text-[9px] font-black uppercase tracking-widest text-slate-400">Rate / 1k</th>
                 <th className="px-8 py-5 text-[9px] font-black uppercase tracking-widest text-slate-400">Payload Limits</th>
                 <th className="px-8 py-5 text-[9px] font-black uppercase tracking-widest text-slate-400 text-center">Action</th>
@@ -370,7 +370,7 @@ const scrollToTop = () => {
                   </tr>
                 ))
               ) : (
-                <tr><td colSpan={5} className="py-20 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Protocol mismatch: Sector empty</td></tr>
+                <tr><td colSpan={5} className="py-20 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Service mismatch: Sector empty</td></tr>
               )}
             </tbody>
           </table>
@@ -432,7 +432,7 @@ const scrollToTop = () => {
             onClick={handleLoadMore}
             className="group flex items-center gap-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 px-8 py-4 rounded-2xl font-black text-xs text-slate-900 dark:text-white hover:border-blue-500 hover:text-blue-500 transition-all shadow-xl shadow-black/5 active:scale-95"
           >
-            Load More Protocols <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+            Load More Services <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
       )}
