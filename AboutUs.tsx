@@ -291,7 +291,7 @@ const team = [
     }
   },
   {
-    name: 'Mohamed Aadil',
+    name: 'Aadil Mohomade',
     role: 'Admin Team',
     image: 'authors/aadil-mohomade.jpg',
     social: { 
@@ -561,7 +561,7 @@ const team = [
               <div className="relative w-14 h-14 rounded-full bg-white dark:bg-[#0f172a] p-0.5">
                 <div className="w-full h-full rounded-full overflow-hidden">
                   <img 
-                    src="https://i.pravatar.cc/150?img=8" 
+                    src="https://files.catbox.moe/xtml83.jpeg" 
                     alt="Danuka Dissanayake" 
                     className="w-full h-full object-cover grayscale hover:grayscale-0 transition duration-700"
                   />
