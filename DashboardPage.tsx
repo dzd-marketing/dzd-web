@@ -29,7 +29,7 @@ export const fetchSmmApi = async (params: Record<string, string>) => {
     // For 'services' action, use cached version
     if (params.action === 'services') {
       // Import dynamically to avoid circular dependency
-      const { getCachedServices } = await import('../utils/serviceCache');
+      const { getCachedServices } = await import('./src/utils/serviceCache');
       return await getCachedServices();
     }
     
