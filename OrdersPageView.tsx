@@ -488,13 +488,14 @@ useEffect(() => {
     return filteredOrders.slice(0, visibleCount);
   }, [filteredOrders, visibleCount]);
 
-  // Filter services for dropdown
-  const filteredServices = useMemo(() => {
-    return services.filter(s => 
-      s.name.toLowerCase().includes(serviceSearch.toLowerCase()) ||
-      s.service.toString().includes(serviceSearch) ||
-      (s.category && s.category.toLowerCase().includes(serviceSearch.toLowerCase()))
-  }, [services, serviceSearch]);
+// Filter services for dropdown
+const filteredServices = useMemo(() => {
+  return services.filter(s => 
+    s.name.toLowerCase().includes(serviceSearch.toLowerCase()) ||
+    s.service.toString().includes(serviceSearch) ||
+    (s.category && s.category.toLowerCase().includes(serviceSearch.toLowerCase()))
+  );
+}, [services, serviceSearch]);
 
   // ============================================
   // ORDER STATS (with profit included in charges)
