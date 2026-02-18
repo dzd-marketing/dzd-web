@@ -75,6 +75,7 @@ const checkLocalStorage = (): LocalStorageResult => {
 };
 
 // Fetch from worker
+// Fetch from worker
 const fetchFromWorker = async (): Promise<Service[]> => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 5000);
@@ -90,16 +91,30 @@ const fetchFromWorker = async (): Promise<Service[]> => {
       throw new Error(`HTTP ${response.status}`);
     }
 
-    const data: WorkerResponse = await response.json();
+    const data = await response.json();
+    
+    // Handle both response formats
+    let services: Service[] = [];
+    
+    if (Array.isArray(data)) {
+      // If worker returns array directly
+      services = data;
+    } else if (data.services && Array.isArray(data.services)) {
+      // If worker returns { services: [...] }
+      services = data.services;
+    } else {
+      console.error('Unexpected API response format:', data);
+      throw new Error('Invalid API response format');
+    }
     
     // Save to localStorage
-    localStorage.setItem(CACHE_KEYS.SERVICES, JSON.stringify(data.services));
+    localStorage.setItem(CACHE_KEYS.SERVICES, JSON.stringify(services));
     localStorage.setItem(CACHE_KEYS.TIMESTAMP, Date.now().toString());
 
-    memoryCache.services = data.services;
+    memoryCache.services = services;
     memoryCache.timestamp = Date.now();
 
-    return data.services;
+    return services;
 
   } catch (error) {
     clearTimeout(timeoutId);
