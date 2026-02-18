@@ -26,22 +26,25 @@ const BASE_URL = import.meta.env.VITE_SMM_API_URL;
 
 export const fetchSmmApi = async (params: Record<string, string>) => {
   try {
+    // For 'services' action, use cached version
+    if (params.action === 'services') {
+      // Import dynamically to avoid circular dependency
+      const { getCachedServices } = await import('../utils/serviceCache');
+      return await getCachedServices();
+    }
+    
+    // For other actions (add, status, balance), still use proxy
     const response = await fetch('/api/proxy', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params) // Just send the params, no key or URL
+      body: JSON.stringify(params),
     });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Proxy Error (${response.status}): ${errorText}`);
-    }
     
     return await response.json();
   } catch (error) {
-    console.error("Critical SMM Node Failure:", error);
+    console.error('API Error:', error);
     throw error;
   }
 };
