@@ -178,8 +178,8 @@ export default function ContactPage({ onSignupClick }: { onSignupClick?: () => v
                 </div>
                 <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">Email Us</h3>
                 <p className="text-slate-500 dark:text-slate-400 text-sm mb-3">24/7 support</p>
-                <a href="mailto:educatelux1@gmail.com" className="text-blue-600 dark:text-blue-400 text-sm font-bold hover:underline">
-                  educatelux1@gmail.com
+                <a href="mailto:support@dzd-marketing.site" className="text-blue-600 dark:text-blue-400 text-sm font-bold hover:underline">
+                  support@dzd-marketing.site
                 </a>
               </div>
             </RevealSection>
