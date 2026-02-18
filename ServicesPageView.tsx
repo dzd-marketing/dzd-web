@@ -353,9 +353,6 @@ const scrollToTop = () => {
   <div className="font-black text-slate-900 dark:text-white text-base">
     LKR {calculatePriceWithProfit(parseFloat(service.rate)).toFixed(2)}
   </div>
-  <div className="text-[8px] font-bold text-slate-400 mt-0.5">
-    Base: LKR {parseFloat(service.rate).toFixed(2)} +65%
-  </div>
 </td>
                     <td className="px-8 py-6">
                       <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter bg-slate-100 dark:bg-white/5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10">
@@ -409,9 +406,6 @@ const scrollToTop = () => {
                     <div>
   <p className="text-lg font-black text-slate-900 dark:text-white tracking-tighter">
     LKR {calculatePriceWithProfit(parseFloat(service.rate)).toFixed(2)}
-  </p>
-  <p className="text-[7px] font-bold text-slate-400">
-    Base: LKR {parseFloat(service.rate).toFixed(2)}
   </p>
 </div>
                  </div>
