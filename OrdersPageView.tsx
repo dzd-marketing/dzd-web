@@ -177,8 +177,6 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
 
   const PAGE_SIZE = 30;
 
-  const [visibleCount, setVisibleCount] = useState(20);
-
   // ============================================
   // FETCH USD EXCHANGE RATE (Every 6 Hours)
   // ============================================
