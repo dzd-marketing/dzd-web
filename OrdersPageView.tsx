@@ -1381,12 +1381,6 @@ const placeOrder = async (e: React.FormEvent) => {
       <span className="text-[9px] font-black text-blue-600">
         LKR {calculateRateWithProfit(parseFloat(serviceDetails.rate)).toFixed(2)}/1k
       </span>
-      <span className="text-[7px] font-bold text-slate-400 line-through">
-        LKR {parseFloat(serviceDetails.rate).toFixed(2)}
-      </span>
-      <span className="text-[7px] font-bold text-emerald-500 bg-emerald-500/10 px-1 py-0.5 rounded">
-        +65%
-      </span>
     </div>
   </div>
                         ) : (
@@ -1443,12 +1437,6 @@ const placeOrder = async (e: React.FormEvent) => {
     <div className="flex items-center gap-1">
       <span className="text-[8px] font-bold text-blue-600">
         LKR {calculateRateWithProfit(parseFloat(service.rate)).toFixed(2)}/1k
-      </span>
-      <span className="text-[6px] font-bold text-slate-400 line-through">
-        LKR {parseFloat(service.rate).toFixed(2)}
-      </span>
-      <span className="text-[6px] font-bold text-emerald-500 bg-emerald-500/10 px-1 py-0.5 rounded">
-        +65%
       </span>
     </div>
     <span className="text-[8px] font-bold text-slate-500">
