@@ -302,47 +302,55 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
     }
   };
 
-  // ============================================
-  // REFRESH ORDER STATUSES FROM SMM API
-  // ============================================
-  const refreshOrderStatuses = async () => {
-    if (!orders.length || !currentUser) return;
-    
-    setRefreshing(true);
-    
-    try {
-      const updatedOrders = await Promise.all(
-        orders.map(async (order) => {
-          try {
-            const statusData = await fetchSmmApi({
-              action: 'status',
-              order: order.orderId
-            });
-            
+// ============================================
+// REFRESH ORDER STATUSES FROM SMM API
+// ============================================
+const refreshOrderStatuses = async () => {
+  if (!orders.length || !currentUser) return;
+  
+  setRefreshing(true);
+  
+  try {
+    const updatedOrders = await Promise.all(
+      orders.map(async (order) => {
+        try {
+          const statusData = await fetchSmmApi({
+            action: 'status',
+            order: order.orderId
+          });
+          
+          // ✅ FIX: Check if statusData has a valid status field
+          if (statusData && typeof statusData === 'object' && statusData.status) {
+            // Only update if we have a valid status
             await updateOrderStatus(order.id, statusData);
             
             return {
               ...order,
               status: statusData.status,
-              remains: statusData.remains,
-              charge: statusData.charge,
-              start_count: statusData.start_count,
-              currency: statusData.currency
+              remains: statusData.remains || order.remains,
+              charge: statusData.charge || order.charge,
+              start_count: statusData.start_count || order.start_count,
+              currency: statusData.currency || order.currency
             };
-          } catch (err) {
-            console.error(`Failed to update order ${order.orderId}:`, err);
-            return order;
+          } else {
+            // If status is missing or invalid, don't update Firestore
+            console.log(`Order ${order.orderId} returned invalid status data:`, statusData);
+            return order; // Return original order without changes
           }
-        })
-      );
-      
-      setOrders(updatedOrders);
-    } catch (err) {
-      console.error('Status refresh failed:', err);
-    } finally {
-      setRefreshing(false);
-    }
-  };
+        } catch (err) {
+          console.error(`Failed to update order ${order.orderId}:`, err);
+          return order;
+        }
+      })
+    );
+    
+    setOrders(updatedOrders);
+  } catch (err) {
+    console.error('Status refresh failed:', err);
+  } finally {
+    setRefreshing(false);
+  }
+};
 
   // ============================================
   // INITIAL LOADS
