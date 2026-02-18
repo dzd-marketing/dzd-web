@@ -1370,7 +1370,7 @@ const placeOrder = async (e: React.FormEvent) => {
                               {serviceDetails.name}
                             </p>
                             <p className="text-[8px] font-bold text-slate-500 mt-0.5">
-                              ID: {serviceDetails.service} | Min: {serviceDetails.min?.toLocaleString()} | Max: {serviceDetails.max?.toLocaleString()} | Rate: ${serviceDetails.rate}/1k
+                              ID: {serviceDetails.service} | Min: {serviceDetails.min?.toLocaleString()} | Max: {serviceDetails.max?.toLocaleString()} | Rate: LKR {serviceDetails.rate}/1k
                             </p>
                           </div>
                         ) : (
@@ -1425,7 +1425,7 @@ const placeOrder = async (e: React.FormEvent) => {
                                     ID: {service.service}
                                   </span>
                                   <span className="text-[8px] font-bold text-slate-500">
-                                    ${service.rate}/1k
+                                    LKR {service.rate}/1k
                                   </span>
                                   <span className="text-[8px] font-bold text-slate-500">
                                     {service.min}-{service.max}
