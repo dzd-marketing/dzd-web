@@ -279,7 +279,7 @@ export default function Footer({ user, onSignupClick }: any) {
             <div className="space-y-3">
               <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
                 <Mail size={16} className="flex-shrink-0" />
-                <span className="text-sm lg:text-base">support@dzdmarketing.com</span>
+                <span className="text-sm lg:text-base">support@dzd-marketing.site</span>
               </div>
               <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
                 <Phone size={16} className="flex-shrink-0" />
