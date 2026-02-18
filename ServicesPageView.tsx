@@ -25,6 +25,21 @@ const calculatePriceWithProfit = (serviceRate: number): number => {
   return finalRate;
 };
 
+const parseServiceRate = (rate: any): number => {
+  // If it's already a number, return it
+  if (typeof rate === 'number') return rate;
+  
+  // If it's a string, remove commas and convert to number
+  if (typeof rate === 'string') {
+    // Remove all commas and convert to number
+    const cleaned = rate.replace(/,/g, '');
+    return parseFloat(cleaned);
+  }
+  
+  // Fallback
+  return 0;
+};
+
 // Helper to extract keywords from service names for badges
 const getStatusBadges = (name: string) => {
   const lower = name.toLowerCase();
@@ -351,7 +366,7 @@ const scrollToTop = () => {
                     </td>
                     <td className="px-8 py-6">
   <div className="font-black text-slate-900 dark:text-white text-base">
-    LKR {calculatePriceWithProfit(parseFloat(service.rate)).toFixed(2)}
+    LKR {calculatePriceWithProfit(parseServiceRate(service.rate)).toFixed(2)}
   </div>
 </td>
                     <td className="px-8 py-6">
@@ -405,7 +420,7 @@ const scrollToTop = () => {
                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Rate / 1k</p>
                     <div>
   <p className="text-lg font-black text-slate-900 dark:text-white tracking-tighter">
-    LKR {calculatePriceWithProfit(parseFloat(service.rate)).toFixed(2)}
+    LKR {calculatePriceWithProfit(parseServiceRate(service.rate)).toFixed(2)}
   </p>
 </div>
                  </div>
