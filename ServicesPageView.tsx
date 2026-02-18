@@ -14,6 +14,17 @@ import {
 import { fetchSmmApi } from './DashboardPage';
 import { useNavigate } from 'react-router-dom';
 
+// Helper to calculate price with 65% profit
+const calculatePriceWithProfit = (serviceRate: number): number => {
+  // Apply FIXED 65% profit margin
+  const profitPercentage = 0.65;
+  
+  // Calculate final rate with profit
+  const finalRate = serviceRate + (serviceRate * profitPercentage);
+  
+  return finalRate;
+};
+
 // Helper to extract keywords from service names for badges
 const getStatusBadges = (name: string) => {
   const lower = name.toLowerCase();
@@ -338,7 +349,14 @@ const scrollToTop = () => {
                         <Globe size={10} /> {service.category}
                       </p>
                     </td>
-                    <td className="px-8 py-6 font-black text-slate-900 dark:text-white text-base">LKR {service.rate}</td>
+                    <td className="px-8 py-6">
+  <div className="font-black text-slate-900 dark:text-white text-base">
+    LKR {calculatePriceWithProfit(parseFloat(service.rate)).toFixed(2)}
+  </div>
+  <div className="text-[8px] font-bold text-slate-400 mt-0.5">
+    Base: LKR {parseFloat(service.rate).toFixed(2)} +65%
+  </div>
+</td>
                     <td className="px-8 py-6">
                       <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter bg-slate-100 dark:bg-white/5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10">
                         {service.min.toLocaleString()} - {service.max.toLocaleString()}
@@ -388,7 +406,14 @@ const scrollToTop = () => {
               <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-white/5">
                  <div>
                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Rate / 1k</p>
-                    <p className="text-lg font-black text-slate-900 dark:text-white tracking-tighter">LKR {service.rate}</p>
+                    <div>
+  <p className="text-lg font-black text-slate-900 dark:text-white tracking-tighter">
+    LKR {calculatePriceWithProfit(parseFloat(service.rate)).toFixed(2)}
+  </p>
+  <p className="text-[7px] font-bold text-slate-400">
+    Base: LKR {parseFloat(service.rate).toFixed(2)}
+  </p>
+</div>
                  </div>
                  <div className="text-right">
                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Payload range</p>
