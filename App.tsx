@@ -135,13 +135,46 @@ export default function App() {
         } else {
           setUser({ uid: firebaseUser.uid, email: firebaseUser.email, name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] });
         }
+        resetTimer();
       } else {
         setUser(null);
+        if (logoutTimer) clearTimeout(logoutTimer);
       }
       setLoading(false);
     });
 
+      const resetTimer = () => {
+    if (logoutTimer) clearTimeout(logoutTimer);
+    
+    // Set timer for 24 hours
+    logoutTimer = setTimeout(() => {
+      auth.signOut();
+      alert('Your session has expired. Please login again for security purposes.');
+    }, 24 * 60 * 60 * 1000);
+  };
+
+  // Listen for user activity to reset timer
+  const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart', 'mousemove'];
+  
+  const handleUserActivity = () => {
+    if (auth.currentUser) {
+      resetTimer();
+    }
+  };
+
+  // Add event listeners
+  activityEvents.forEach(event => {
+    window.addEventListener(event, handleUserActivity);
+  });
+
+
     return () => unsubscribe();
+
+       if (logoutTimer) clearTimeout(logoutTimer);
+    activityEvents.forEach(event => {
+      window.removeEventListener(event, handleUserActivity);
+    });
+  };
   }, []);
 
   useEffect(() => {
