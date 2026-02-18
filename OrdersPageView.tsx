@@ -107,6 +107,21 @@ const calculateRateWithProfit = (serviceRate: number): number => {
   return serviceRate + (serviceRate * 0.65);
 };
 
+const parseServiceRate = (rate: any): number => {
+  // If it's already a number, return it
+  if (typeof rate === 'number') return rate;
+  
+  // If it's a string, remove commas and convert to number
+  if (typeof rate === 'string') {
+    // Remove all commas and convert to number
+    const cleaned = rate.replace(/,/g, '');
+    return parseFloat(cleaned);
+  }
+  
+  // Fallback
+  return 0;
+};
+
 export default function OrdersPageView({ scrollContainerRef }: any) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -533,7 +548,7 @@ const placeOrder = async (e: React.FormEvent) => {
   // Calculate price with profit (LKR only)
   const finalPrice = calculatePriceWithProfit(
     parseInt(quantity) || 0,
-    parseFloat(serviceDetails?.rate || 0)
+    parseServiceRate(serviceDetails?.rate || 0)
   );
 
   // Check if user has sufficient balance
@@ -1327,7 +1342,7 @@ const placeOrder = async (e: React.FormEvent) => {
       ⚠️ Insufficient funds. You need LKR {
         calculatePriceWithProfit(
           parseInt(quantity) || 0, 
-          parseFloat(serviceDetails.rate)
+          parseServiceRate(serviceDetails.rate)
         ).toFixed(2)
       } but have LKR {userBalance.total_balance}
     </p>
@@ -1379,7 +1394,7 @@ const placeOrder = async (e: React.FormEvent) => {
     </p>
     <div className="flex items-center gap-2 mt-1">
       <span className="text-[9px] font-black text-blue-600">
-        LKR {calculateRateWithProfit(parseFloat(serviceDetails.rate)).toFixed(2)}/1k
+LKR {calculateRateWithProfit(parseServiceRate(serviceDetails.rate)).toFixed(2)}/1k
       </span>
     </div>
   </div>
@@ -1436,7 +1451,7 @@ const placeOrder = async (e: React.FormEvent) => {
     </span>
     <div className="flex items-center gap-1">
       <span className="text-[8px] font-bold text-blue-600">
-        LKR {calculateRateWithProfit(parseFloat(service.rate)).toFixed(2)}/1k
+        LKR {calculateRateWithProfit(parseServiceRate(service.rate)).toFixed(2)}/1k
       </span>
     </div>
     <span className="text-[8px] font-bold text-slate-500">
