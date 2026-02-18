@@ -26,14 +26,32 @@ const BASE_URL = import.meta.env.VITE_SMM_API_URL;
 
 export const fetchSmmApi = async (params: Record<string, string>) => {
   try {
-    // For 'services' action, use cached version
+    // For 'services' action, use worker cache (not SMM API)
     if (params.action === 'services') {
-      // Import dynamically to avoid circular dependency
-      const { getCachedServices } = await import('./src/utils/serviceCache');
-      return await getCachedServices();
+      console.log('📦 Loading services from worker cache...');
+      
+      // Direct fetch to worker (bypass cache system for simplicity)
+      const response = await fetch('https://smm-services-cache.sitewasd2026.workers.dev/api/services');
+      
+      if (!response.ok) {
+        throw new Error(`Worker returned ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Handle both array and object formats
+      if (Array.isArray(data)) {
+        return data;
+      } else if (data && typeof data === 'object' && data.services && Array.isArray(data.services)) {
+        return data.services;
+      } else {
+        console.error('Unexpected worker response:', data);
+        return [];
+      }
     }
     
-    // For other actions (add, status, balance), still use proxy
+    // For other actions (add, status, balance), use proxy to SMM API
+    console.log(`🔄 Proxying ${params.action} to SMM API...`);
     const response = await fetch('/api/proxy', {
       method: 'POST',
       headers: {
