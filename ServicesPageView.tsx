@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { fetchSmmApi } from './DashboardPage';
 import { useNavigate } from 'react-router-dom';
-import { getCachedServices, preloadServices } from '../utils/serviceCache';
+import { getCachedServices, preloadServices } from './src/utils/serviceCache';
 
 // Helper to calculate price with 65% profit
 const calculatePriceWithProfit = (serviceRate: number): number => {
