@@ -174,10 +174,10 @@ export default function DashboardHomeView({ user, setActiveTab }: any) {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-            System Overview
+            Dashboard Section
           </h1>
           <p className="text-slate-500 font-bold uppercase tracking-widest text-[8px] sm:text-[10px] mt-1">
-            Commanding: {user?.fullName || user?.displayName || user?.email}
+            User Name: {user?.fullName || user?.displayName || user?.email}
           </p>
         </div>
         
@@ -287,7 +287,7 @@ export default function DashboardHomeView({ user, setActiveTab }: any) {
           <div className="flex flex-wrap justify-between items-center gap-3 mb-6 sm:mb-8">
             <div className="flex items-center gap-3">
               <h3 className="text-base sm:text-xl font-black tracking-tight uppercase tracking-widest text-xs text-slate-400">
-                Execution History
+                Recent Orders
               </h3>
               {loading.orders && (
                 <Loader size={12} className="animate-spin text-blue-500" />
