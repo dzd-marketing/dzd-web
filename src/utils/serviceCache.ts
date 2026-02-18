@@ -1,6 +1,5 @@
 // src/utils/serviceCache.ts
 
-// Types and Interfaces
 interface Service {
   service: number;
   name: string;
@@ -11,44 +10,18 @@ interface Service {
   max: number;
 }
 
-interface CacheData {
-  services: Service[] | null;
-  timestamp: number | null;
-  pendingPromise: Promise<Service[]> | null;
-}
-
-interface LocalStorageResult {
-  valid: boolean;
-  services?: Service[];
-}
-
-interface WorkerResponse {
-  services: Service[];
-  meta: {
-    count: number;
-    last_sync: string | null;
-  };
-}
-
-// Cache keys
 const CACHE_KEYS = {
   SERVICES: 'smm_services_cache',
-  TIMESTAMP: 'smm_services_timestamp',
-  ETAG: 'smm_services_etag'
-} as const;
-
-// Cache expiry (23 hours)
-const CACHE_EXPIRY = 23 * 60 * 60 * 1000;
-
-// In-memory cache
-let memoryCache: CacheData = {
-  services: null,
-  timestamp: null,
-  pendingPromise: null
+  TIMESTAMP: 'smm_services_timestamp'
 };
 
-// Worker URL - REPLACE WITH YOUR WORKER URL
+const CACHE_EXPIRY = 23 * 60 * 60 * 1000; // 23 hours
 const WORKER_URL = 'https://smm-services-cache.sitewasd2026.workers.dev';
+
+// Simple in-memory cache
+let memoryServices: Service[] | null = null;
+let memoryTimestamp: number | null = null;
+let pendingPromise: Promise<Service[]> | null = null;
 
 // Check if cache is valid
 const isCacheValid = (timestamp: number | null): boolean => {
@@ -56,72 +29,55 @@ const isCacheValid = (timestamp: number | null): boolean => {
   return (Date.now() - timestamp) < CACHE_EXPIRY;
 };
 
-// Check localStorage
-const checkLocalStorage = (): LocalStorageResult => {
-  try {
-    const cached = localStorage.getItem(CACHE_KEYS.SERVICES);
-    const timestamp = localStorage.getItem(CACHE_KEYS.TIMESTAMP);
-
-    if (cached && timestamp && isCacheValid(parseInt(timestamp))) {
-      return {
-        valid: true,
-        services: JSON.parse(cached) as Service[]
-      };
-    }
-  } catch (e) {
-    console.warn('Failed to read from localStorage:', e);
-  }
-  return { valid: false };
-};
-
-// Fetch from worker
-// Fetch from worker
+// Fetch from worker - SIMPLIFIED
 const fetchFromWorker = async (): Promise<Service[]> => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5000);
-
+  console.log('🌐 Fetching services from worker...');
+  
   try {
-    const response = await fetch(`${WORKER_URL}/api/services`, {
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
-
+    const response = await fetch(`${WORKER_URL}/api/services`);
+    
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
 
     const data = await response.json();
     
-    // Handle both response formats
+    // Handle both array and object formats
     let services: Service[] = [];
     
     if (Array.isArray(data)) {
-      // If worker returns array directly
       services = data;
-    } else if (data.services && Array.isArray(data.services)) {
-      // If worker returns { services: [...] }
+      console.log(`✅ Received array with ${services.length} services`);
+    } else if (data && typeof data === 'object' && 'services' in data && Array.isArray(data.services)) {
       services = data.services;
+      console.log(`✅ Received object with services array, length: ${services.length}`);
     } else {
-      console.error('Unexpected API response format:', data);
+      console.error('❌ Unexpected format:', data);
       throw new Error('Invalid API response format');
     }
     
     // Save to localStorage
-    localStorage.setItem(CACHE_KEYS.SERVICES, JSON.stringify(services));
-    localStorage.setItem(CACHE_KEYS.TIMESTAMP, Date.now().toString());
+    try {
+      localStorage.setItem(CACHE_KEYS.SERVICES, JSON.stringify(services));
+      localStorage.setItem(CACHE_KEYS.TIMESTAMP, Date.now().toString());
+      console.log('💾 Saved to localStorage');
+    } catch (e) {
+      console.warn('Failed to save to localStorage:', e);
+    }
 
-    memoryCache.services = services;
-    memoryCache.timestamp = Date.now();
+    // Update memory cache
+    memoryServices = services;
+    memoryTimestamp = Date.now();
 
     return services;
 
   } catch (error) {
-    clearTimeout(timeoutId);
+    console.error('❌ Error fetching from worker:', error);
     
-    // Fallback to localStorage even if expired
+    // Try localStorage as fallback
     const fallback = localStorage.getItem(CACHE_KEYS.SERVICES);
     if (fallback) {
+      console.log('📦 Using localStorage fallback');
       return JSON.parse(fallback) as Service[];
     }
     
@@ -129,49 +85,93 @@ const fetchFromWorker = async (): Promise<Service[]> => {
   }
 };
 
-// Get services with caching
+// Main function to get services
 export const getCachedServices = async (): Promise<Service[]> => {
+  console.log('🔍 Getting cached services...');
+  
   // 1. Check memory cache
-  if (memoryCache.services && isCacheValid(memoryCache.timestamp)) {
-    return memoryCache.services;
+  if (memoryServices && isCacheValid(memoryTimestamp)) {
+    console.log('✅ Returning from memory cache:', memoryServices.length);
+    return memoryServices;
   }
 
-  // 2. Deduplicate requests
-  if (memoryCache.pendingPromise) {
-    return memoryCache.pendingPromise;
+  // 2. Check localStorage
+  try {
+    const cached = localStorage.getItem(CACHE_KEYS.SERVICES);
+    const timestamp = localStorage.getItem(CACHE_KEYS.TIMESTAMP);
+    
+    if (cached && timestamp && isCacheValid(parseInt(timestamp))) {
+      const services = JSON.parse(cached) as Service[];
+      console.log('✅ Returning from localStorage:', services.length);
+      
+      // Update memory cache
+      memoryServices = services;
+      memoryTimestamp = parseInt(timestamp);
+      
+      return services;
+    }
+  } catch (e) {
+    console.warn('Failed to read from localStorage:', e);
   }
 
-  // 3. Check localStorage
-  const localData = checkLocalStorage();
-  if (localData.valid && localData.services) {
-    memoryCache.services = localData.services;
-    memoryCache.timestamp = Date.now();
-    return localData.services;
+  // 3. Prevent duplicate requests
+  if (pendingPromise) {
+    console.log('⏳ Using existing promise');
+    return pendingPromise;
   }
 
   // 4. Fetch from worker
-  memoryCache.pendingPromise = fetchFromWorker();
+  console.log('🔄 Fetching from worker...');
+  pendingPromise = fetchFromWorker();
   
   try {
-    const services = await memoryCache.pendingPromise;
+    const services = await pendingPromise;
     return services;
   } finally {
-    memoryCache.pendingPromise = null;
+    pendingPromise = null;
   }
 };
 
-// Preload cache
+// Preload function
 export const preloadServices = (): void => {
+  console.log('🔄 Preloading services...');
   setTimeout(() => {
-    getCachedServices().catch(() => {
-      // Silently fail for preload
-    });
+    getCachedServices().catch(() => {});
   }, 1000);
 };
 
 // Clear cache
 export const clearServicesCache = (): void => {
-  memoryCache = { services: null, timestamp: null, pendingPromise: null };
+  console.log('🧹 Clearing cache');
+  memoryServices = null;
+  memoryTimestamp = null;
+  pendingPromise = null;
   localStorage.removeItem(CACHE_KEYS.SERVICES);
   localStorage.removeItem(CACHE_KEYS.TIMESTAMP);
+};
+
+// Debug function
+export const debugServices = async (): Promise<void> => {
+  console.log('🔧 DEBUG MODE');
+  
+  // Direct fetch
+  try {
+    const direct = await fetch(`${WORKER_URL}/api/services`).then(r => r.json());
+    console.log('📡 Direct API:', Array.isArray(direct) ? `Array (${direct.length})` : 'Not array', direct);
+  } catch (err) {
+    console.error('Direct fetch failed:', err);
+  }
+  
+  // Check localStorage
+  const cached = localStorage.getItem(CACHE_KEYS.SERVICES);
+  const timestamp = localStorage.getItem(CACHE_KEYS.TIMESTAMP);
+  console.log('💾 localStorage:', cached ? `Has data (${JSON.parse(cached).length} items)` : 'Empty', 'Timestamp:', timestamp);
+  
+  // Get cached
+  try {
+    const services = await getCachedServices();
+    console.log('📦 getCachedServices result:', Array.isArray(services) ? `Array (${services.length})` : 'Not array', services);
+  } catch (err) {
+    console.error('getCachedServices failed:', err);
+  }
 };
