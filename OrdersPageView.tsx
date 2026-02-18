@@ -494,7 +494,6 @@ useEffect(() => {
       s.name.toLowerCase().includes(serviceSearch.toLowerCase()) ||
       s.service.toString().includes(serviceSearch) ||
       (s.category && s.category.toLowerCase().includes(serviceSearch.toLowerCase()))
-    ).slice(0, 20);
   }, [services, serviceSearch]);
 
   // ============================================
@@ -1418,7 +1417,7 @@ LKR {calculateRateWithProfit(parseServiceRate(serviceDetails.rate)).toFixed(2)}/
           value={serviceSearch}
           onChange={(e) => {
             setServiceSearch(e.target.value);
-            setVisibleCount(20); // Reset visible count on search
+            setVisibleCount(20);
           }}
           className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2.5 pl-9 pr-4 text-xs focus:border-blue-600 outline-none"
           autoFocus
@@ -1432,7 +1431,7 @@ LKR {calculateRateWithProfit(parseServiceRate(serviceDetails.rate)).toFixed(2)}/
           <Loader2 size={20} className="mx-auto animate-spin text-blue-600" />
           <p className="text-[9px] font-black uppercase text-slate-400 mt-2">Loading services...</p>
         </div>
-      ) : filteredServices.slice(0, visibleCount).length > 0 ? (
+      ) : filteredServices.length > 0 ? (
         <>
           {filteredServices.slice(0, visibleCount).map(service => (
             <button
@@ -1443,7 +1442,7 @@ LKR {calculateRateWithProfit(parseServiceRate(serviceDetails.rate)).toFixed(2)}/
                 setSelectedServiceId(service.service.toString());
                 setServiceSearch('');
                 setShowServiceDropdown(false);
-                setVisibleCount(20); // Reset count when service selected
+                setVisibleCount(20);
               }}
               className="w-full text-left px-3 py-3 rounded-lg hover:bg-blue-600/10 transition-all"
             >
