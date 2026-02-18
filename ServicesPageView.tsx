@@ -72,10 +72,14 @@ const loadServices = async () => {
   setLoading(true);
   setError('');
   try {
-    // Use cached services instead of API
+    console.log('Fetching services...');
     const data = await getCachedServices();
+    console.log('Data received:', data);
+    console.log('Is array?', Array.isArray(data));
+    console.log('Length:', data?.length);
     setServices(data);
   } catch (err) {
+    console.error('ERROR:', err);
     setError('Failed to load services. Please refresh.');
   } finally {
     setLoading(false);
