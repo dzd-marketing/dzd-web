@@ -177,6 +177,8 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
 
   const PAGE_SIZE = 30;
 
+  const [visibleCount, setVisibleCount] = useState(20);
+
   // ============================================
   // FETCH USD EXCHANGE RATE (Every 6 Hours)
   // ============================================
@@ -1407,65 +1409,86 @@ LKR {calculateRateWithProfit(parseServiceRate(serviceDetails.rate)).toFixed(2)}/
                       )}
                     </button>
 
-                    {showServiceDropdown && !navigationLoading && (
-                      <div className="absolute z-50 mt-2 w-full bg-white dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl p-3 max-h-96 overflow-y-auto">
-                        <div className="mb-3">
-                          <div className="relative">
-                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                            <input
-                              type="text"
-                              placeholder="Search services..."
-                              value={serviceSearch}
-                              onChange={(e) => setServiceSearch(e.target.value)}
-                              className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2.5 pl-9 pr-4 text-xs focus:border-blue-600 outline-none"
-                              autoFocus
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-1">
-                          {loadingServices ? (
-                            <div className="py-8 text-center">
-                              <Loader2 size={20} className="mx-auto animate-spin text-blue-600" />
-                              <p className="text-[9px] font-black uppercase text-slate-400 mt-2">Loading services...</p>
-                            </div>
-                          ) : filteredServices.length > 0 ? (
-                            filteredServices.map(service => (
-<button
-  key={service.service}
-  type="button"
-  onClick={() => {
-    setSelectedService(service.name);
-    setSelectedServiceId(service.service.toString());
-    setServiceSearch('');
-    setShowServiceDropdown(false);
-  }}
-  className="w-full text-left px-3 py-3 rounded-lg hover:bg-blue-600/10 transition-all"
->
-  <p className="font-bold text-slate-900 dark:text-white text-xs">
-    {service.name}
-  </p>
-  <div className="flex items-center gap-3 mt-1">
-    <span className="text-[8px] font-black text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded">
-      ID: {service.service}
-    </span>
-    <div className="flex items-center gap-1">
-      <span className="text-[8px] font-bold text-blue-600">
-        LKR {calculateRateWithProfit(parseServiceRate(service.rate)).toFixed(2)}/1k
-      </span>
+{showServiceDropdown && !navigationLoading && (
+  <div className="absolute z-50 mt-2 w-full bg-white dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl p-3 max-h-96 overflow-y-auto">
+    <div className="mb-3">
+      <div className="relative">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input
+          type="text"
+          placeholder="Search services..."
+          value={serviceSearch}
+          onChange={(e) => {
+            setServiceSearch(e.target.value);
+            setVisibleCount(20); // Reset visible count on search
+          }}
+          className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2.5 pl-9 pr-4 text-xs focus:border-blue-600 outline-none"
+          autoFocus
+        />
+      </div>
     </div>
-    <span className="text-[8px] font-bold text-slate-500">
-      {service.min}-{service.max}
-    </span>
+    
+    <div className="space-y-1 max-h-60 overflow-y-auto">
+      {loadingServices ? (
+        <div className="py-8 text-center">
+          <Loader2 size={20} className="mx-auto animate-spin text-blue-600" />
+          <p className="text-[9px] font-black uppercase text-slate-400 mt-2">Loading services...</p>
+        </div>
+      ) : filteredServices.slice(0, visibleCount).length > 0 ? (
+        <>
+          {filteredServices.slice(0, visibleCount).map(service => (
+            <button
+              key={service.service}
+              type="button"
+              onClick={() => {
+                setSelectedService(service.name);
+                setSelectedServiceId(service.service.toString());
+                setServiceSearch('');
+                setShowServiceDropdown(false);
+                setVisibleCount(20); // Reset count when service selected
+              }}
+              className="w-full text-left px-3 py-3 rounded-lg hover:bg-blue-600/10 transition-all"
+            >
+              <p className="font-bold text-slate-900 dark:text-white text-xs">
+                {service.name}
+              </p>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-[8px] font-black text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded">
+                  ID: {service.service}
+                </span>
+                <div className="flex items-center gap-1">
+                  <span className="text-[8px] font-bold text-blue-600">
+                    LKR {calculateRateWithProfit(parseServiceRate(service.rate)).toFixed(2)}/1k
+                  </span>
+                </div>
+                <span className="text-[8px] font-bold text-slate-500">
+                  {service.min}-{service.max}
+                </span>
+              </div>
+            </button>
+          ))}
+          
+          {/* Load More Button */}
+          {filteredServices.length > visibleCount && (
+            <button
+              onClick={() => setVisibleCount(prev => prev + 20)}
+              className="w-full mt-2 py-2.5 bg-slate-100 dark:bg-white/5 rounded-lg text-[9px] font-black uppercase tracking-widest text-blue-600 hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center gap-2 border border-slate-200 dark:border-white/10"
+            >
+              Load More Services <ArrowRight size={12} />
+            </button>
+          )}
+          
+          {/* Show count */}
+          <div className="text-[7px] font-bold text-slate-400 text-center pt-2 pb-1">
+            Showing {Math.min(visibleCount, filteredServices.length)} of {filteredServices.length} services
+          </div>
+        </>
+      ) : (
+        <p className="py-4 text-center text-[10px] text-slate-500">No services found</p>
+      )}
+    </div>
   </div>
-</button>
-                            ))
-                          ) : (
-                            <p className="py-4 text-center text-[10px] text-slate-500">No services found</p>
-                          )}
-                        </div>
-                      </div>
-                    )}
+)}
                   </div>
                 </div>
 
