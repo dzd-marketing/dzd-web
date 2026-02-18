@@ -89,34 +89,17 @@ const calculatePriceWithProfit = (quantity: number, serviceRate: number): number
   // Calculate base price in LKR (rate per 1000)
   const baseLkrPrice = (quantity / 1000) * serviceRate;
   
-  // Apply PROFIT MARGIN based on service rate
-  let profitPercentage = 0.2; // Default 20% profit
-  
-  if (serviceRate < 5) {
-    // For very cheap services (< 5 LKR per 1k)
-    profitPercentage = 0.5; // 50% profit
-  } else if (serviceRate < 15) {
-    // For low-medium services (5-15 LKR per 1k)
-    profitPercentage = 0.35; // 35% profit
-  } else if (serviceRate < 30) {
-    // For medium services (15-30 LKR per 1k)
-    profitPercentage = 0.25; // 25% profit
-  } else if (serviceRate < 50) {
-    // For medium-high services (30-50 LKR per 1k)
-    profitPercentage = 0.2; // 20% profit
-  } else {
-    // For expensive services (> 50 LKR per 1k)
-    profitPercentage = 0.15; // 15% profit
-  }
+  // Apply FIXED 65% profit margin (0.65 = 65%)
+  const profitPercentage = 0.65; // 65% fixed profit
   
   // Calculate profit amount
   const profitAmount = baseLkrPrice * profitPercentage;
   
   // Add profit to base price
-  const lkrWithProfit = baseLkrPrice + profitAmount;
+  const finalPrice = baseLkrPrice + profitAmount;
   
-  // Ensure minimum profit of 5 LKR (for very small quantities)
-  return Math.max(lkrWithProfit, baseLkrPrice + 5);
+  // Return final price with 65% profit
+  return finalPrice;
 };
 
 export default function OrdersPageView({ scrollContainerRef }: any) {
