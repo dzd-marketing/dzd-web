@@ -594,16 +594,17 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
         <div className="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-slate-50 to-transparent dark:from-[#020617] dark:to-transparent"></div>
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 lg:mb-16">
-            <div>
+          {/* 🔁 Heading section modified to center the heading */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 lg:mb-16">
+            <div className="flex-1 text-center">
               <RevealSection>
-                <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-black uppercase tracking-[0.3em] text-[9px] mb-3">
+                <div className="flex items-center justify-center gap-2 text-blue-600 dark:text-blue-400 font-black uppercase tracking-[0.3em] text-[9px] mb-3">
                   <Sparkles size={12} /> PREMIUM SERVICES
                 </div>
                 <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tighter leading-tight">
                   Our Top <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Services</span>
                 </h2>
-                <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base max-w-2xl mt-3 lg:mt-4 font-medium">
+                <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base max-w-2xl mt-3 lg:mt-4 font-medium mx-auto">
                   Comprehensive social media marketing solutions across all major networks. Choose your platform and boost your growth.
                 </p>
               </RevealSection>
