@@ -685,13 +685,13 @@ const placeOrder = async (e: React.FormEvent) => {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
-                {activeView === 'orders' ? 'Mission Logs' : 'New Mission'}
+                {activeView === 'orders' ? 'Orders Section' : 'New Mission'}
               </h1>
               <p className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-[0.3em] text-[9px] mt-1.5 flex items-center gap-2">
                 <Activity size={10} className="text-blue-500 animate-pulse" />
                 {activeView === 'orders' 
                   ? currentUser 
-                    ? `${filteredOrders.length} Active Transactions` 
+                    ? `${filteredOrders.length} Active Orders` 
                     : 'Sign in to view orders'
                   : 'Deploy New Order'
                 }
@@ -752,7 +752,7 @@ const placeOrder = async (e: React.FormEvent) => {
                   className="hidden md:flex items-center gap-2 px-5 py-3 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 text-slate-500 hover:text-blue-500 transition-all shadow-sm active:scale-95"
                 >
                   <RefreshCw size={14} className={(loading || refreshing) ? 'animate-spin' : ''} />
-                  <span className="text-[9px] font-black uppercase tracking-widest">Sync</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest">Refresh</span>
                 </button>
               )}
             </div>
@@ -976,7 +976,7 @@ const placeOrder = async (e: React.FormEvent) => {
                     <tr>
                       <td colSpan={8} className="py-24 text-center">
                         <Loader2 className="mx-auto animate-spin text-blue-600 mb-4" size={32} />
-                        <p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.4em]">Loading Mission Logs...</p>
+                        <p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.4em]">Loading Orders...</p>
                       </td>
                     </tr>
                   ) : visibleOrders.length > 0 ? (
