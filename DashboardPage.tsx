@@ -89,25 +89,23 @@ export default function DashboardPage({ user }: any) {
     setActiveTab(getCurrentTabFromPath());
   }, [location.pathname]);
 
-  useEffect(() => {
-    const updateBalance = async () => {
-      setLoadingBalance(true);
-      try {
-        const data = await fetchSmmApi({ action: 'balance' });
-        if (data && data.balance) {
-          setBalance(data.balance);
-        }
-      } catch (err) {
-        console.error("Balance Protocol Sync Failed. Proxy might be offline.");
-      } finally {
-        setLoadingBalance(false);
+useEffect(() => {
+  const updateBalance = async () => {
+    setLoadingBalance(true);
+    try {
+      const data = await fetchSmmApi({ action: 'balance' });
+      if (data && data.balance) {
+        setBalance(data.balance);
       }
-    };
-    
-    updateBalance();
-    const interval = setInterval(updateBalance, 60000);
-    return () => clearInterval(interval);
-  }, []);
+    } catch (err) {
+      console.error("Balance Protocol Sync Failed. Proxy might be offline.");
+    } finally {
+      setLoadingBalance(false);
+    }
+  };
+  
+  updateBalance(); // Only fetch once on mount
+}, []); // Empty dependency array = runs once
 
   if (!user) return <Navigate to="/" />;
 
