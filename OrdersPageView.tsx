@@ -1406,32 +1406,40 @@ const placeOrder = async (e: React.FormEvent) => {
                             </div>
                           ) : filteredServices.length > 0 ? (
                             filteredServices.map(service => (
-                              <button
-                                key={service.service}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedService(service.name);
-                                  setSelectedServiceId(service.service.toString());
-                                  setServiceSearch('');
-                                  setShowServiceDropdown(false);
-                                }}
-                                className="w-full text-left px-3 py-3 rounded-lg hover:bg-blue-600/10 transition-all"
-                              >
-                                <p className="font-bold text-slate-900 dark:text-white text-xs">
-                                  {service.name}
-                                </p>
-                                <div className="flex items-center gap-3 mt-1">
-                                  <span className="text-[8px] font-black text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded">
-                                    ID: {service.service}
-                                  </span>
-                                  <span className="text-[8px] font-bold text-slate-500">
-                                    LKR {service.rate}/1k
-                                  </span>
-                                  <span className="text-[8px] font-bold text-slate-500">
-                                    {service.min}-{service.max}
-                                  </span>
-                                </div>
-                              </button>
+ <button
+  key={service.service}
+  type="button"
+  onClick={() => {
+    setSelectedService(service.name);
+    setSelectedServiceId(service.service.toString());
+    setServiceSearch('');
+    setShowServiceDropdown(false);
+  }}
+  className="w-full text-left px-3 py-3 rounded-lg hover:bg-blue-600/10 transition-all"
+>
+  <p className="font-bold text-slate-900 dark:text-white text-xs">
+    {service.name}
+  </p>
+  <div className="flex items-center gap-3 mt-1">
+    <span className="text-[8px] font-black text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded">
+      ID: {service.service}
+    </span>
+    <div className="flex items-center gap-1">
+      <span className="text-[8px] font-bold text-blue-600">
+        LKR {calculatePriceWithProfit(parseFloat(service.rate)).toFixed(2)}
+      </span>
+      <span className="text-[6px] font-bold text-slate-400 line-through">
+        {parseFloat(service.rate).toFixed(2)}
+      </span>
+      <span className="text-[6px] font-bold text-emerald-500 bg-emerald-500/10 px-1 py-0.5 rounded">
+        +65%
+      </span>
+    </div>
+    <span className="text-[8px] font-bold text-slate-500">
+      {service.min}-{service.max}
+    </span>
+  </div>
+</button>
                             ))
                           ) : (
                             <p className="py-4 text-center text-[10px] text-slate-500">No services found</p>
