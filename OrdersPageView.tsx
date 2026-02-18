@@ -102,6 +102,11 @@ const calculatePriceWithProfit = (quantity: number, serviceRate: number): number
   return finalPrice;
 };
 
+const calculateRateWithProfit = (serviceRate: number): number => {
+  // Apply FIXED 65% profit margin to the rate per 1k
+  return serviceRate + (serviceRate * 0.65);
+};
+
 export default function OrdersPageView({ scrollContainerRef }: any) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -1365,14 +1370,25 @@ const placeOrder = async (e: React.FormEvent) => {
                             </div>
                           </div>
                         ) : serviceDetails ? (
-                          <div>
-                            <p className="font-black text-slate-900 dark:text-white text-sm">
-                              {serviceDetails.name}
-                            </p>
-                            <p className="text-[8px] font-bold text-slate-500 mt-0.5">
-                              ID: {serviceDetails.service} | Min: {serviceDetails.min?.toLocaleString()} | Max: {serviceDetails.max?.toLocaleString()} | Rate: LKR {serviceDetails.rate}/1k
-                            </p>
-                          </div>
+ <div>
+    <p className="font-black text-slate-900 dark:text-white text-sm">
+      {serviceDetails.name}
+    </p>
+    <p className="text-[8px] font-bold text-slate-500 mt-0.5">
+      ID: {serviceDetails.service} | Min: {serviceDetails.min?.toLocaleString()} | Max: {serviceDetails.max?.toLocaleString()}
+    </p>
+    <div className="flex items-center gap-2 mt-1">
+      <span className="text-[9px] font-black text-blue-600">
+        LKR {calculateRateWithProfit(parseFloat(serviceDetails.rate)).toFixed(2)}/1k
+      </span>
+      <span className="text-[7px] font-bold text-slate-400 line-through">
+        LKR {parseFloat(serviceDetails.rate).toFixed(2)}
+      </span>
+      <span className="text-[7px] font-bold text-emerald-500 bg-emerald-500/10 px-1 py-0.5 rounded">
+        +65%
+      </span>
+    </div>
+  </div>
                         ) : (
                           <p className="text-sm text-slate-400">Choose a service to deploy</p>
                         )}
@@ -1406,7 +1422,7 @@ const placeOrder = async (e: React.FormEvent) => {
                             </div>
                           ) : filteredServices.length > 0 ? (
                             filteredServices.map(service => (
- <button
+<button
   key={service.service}
   type="button"
   onClick={() => {
@@ -1426,10 +1442,10 @@ const placeOrder = async (e: React.FormEvent) => {
     </span>
     <div className="flex items-center gap-1">
       <span className="text-[8px] font-bold text-blue-600">
-        LKR {calculatePriceWithProfit(parseFloat(service.rate)).toFixed(2)}
+        LKR {calculateRateWithProfit(parseFloat(service.rate)).toFixed(2)}/1k
       </span>
       <span className="text-[6px] font-bold text-slate-400 line-through">
-        {parseFloat(service.rate).toFixed(2)}
+        LKR {parseFloat(service.rate).toFixed(2)}
       </span>
       <span className="text-[6px] font-bold text-emerald-500 bg-emerald-500/10 px-1 py-0.5 rounded">
         +65%
