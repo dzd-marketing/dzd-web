@@ -230,6 +230,8 @@ export default function App() {
           </main>
 
           <AIChatWidget />
+          
+          <WhatsAppPopup whatsappLink={whatsappChannelLink} />
           {/* Footer is hidden on dashboard pages */}
           {!hideFooter && <Footer user={user} onSignupClick={openSignup} />}
 
