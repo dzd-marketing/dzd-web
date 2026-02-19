@@ -232,7 +232,7 @@ export default function App() {
 
           <AIChatWidget />
           
-          <WhatsAppPopup whatsappLink={whatsappChannelLink} />
+          <WhatsAppPopup whatsappLink={https://whatsapp.com/channel/0029VbBSLK7CRs1j1WRhuv1w} />
           {/* Footer is hidden on dashboard pages */}
           {!hideFooter && <Footer user={user} onSignupClick={openSignup} />}
 
