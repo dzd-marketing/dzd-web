@@ -23,6 +23,7 @@ import PricingPage from './PricingPage';
 import Footer from './Footer';
 import WaBoost from './waboost/WhatsAppBoostView';
 import Maintain from './Maintenance.tsx' // Maintance page 
+import WhatsAppPopup from './WhatsAppPopup';
 
 // Loading Spinner Component with inline styles
 const LoadingSpinner = () => {
