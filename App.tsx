@@ -192,6 +192,7 @@ export default function App() {
     
     // Hide footer on all dashboard routes
     const hideFooter = location.pathname.startsWith('/dashboard');
+    const whatsappChannelLink = "https://whatsapp.com/channel/0029VbBSLK7CRs1j1WRhuv1w";
 
     return (
       <>
@@ -232,7 +233,8 @@ export default function App() {
 
           <AIChatWidget />
           
-          <WhatsAppPopup whatsappLink={https://whatsapp.com/channel/0029VbBSLK7CRs1j1WRhuv1w} />
+          <WhatsAppPopup whatsappLink="https://whatsapp.com/channel/0029VbBSLK7CRs1j1WRhuv1w" />
+          
           {/* Footer is hidden on dashboard pages */}
           {!hideFooter && <Footer user={user} onSignupClick={openSignup} />}
 
